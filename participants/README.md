@@ -28,7 +28,7 @@ Voir [docs/SESSION-MANAGEMENT.md](../docs/SESSION-MANAGEMENT.md) pour plus de d�
 ### 1. Générer votre clé SSH ed25519 (si nécessaire)
 
 ```bash
-ssh-keygen -t ed25519 -C "votre.email@example.com"
+ssh-keygen -t ed25519
 ```
 
 ### 2. Récupérer votre clé publique
@@ -49,6 +49,12 @@ Créez un fichier nommé `prenom.nom.pub` contenant votre clé publique dans le 
 
 **Emplacement recommandé** : `participants/session-XXXXX/votre.nom.pub`
 
+**Note importante sur la confidentialité :**
+- Le nom du fichier sera automatiquement transformé en format discret : `prenom.no` (prénom + 2 premières lettres du nom)
+- Exemple : `john.doe.pub` → identifiant `john.do` dans AWS
+- N'incluez JAMAIS d'adresse email dans le nom du fichier
+- L'email dans le commentaire de la clé SSH est optionnel et ne sera pas utilisé par Terraform
+
 ### 4. Soumettre votre clé
 
 ```bash
@@ -57,7 +63,7 @@ git clone <repository-url>
 cd kubernetes-aws-lab
 
 # Déposer votre clé dans le répertoire de session (remplacer session-XXXXX par le nom de votre session)
-echo "ssh-ed25519 AAAA... votre-email@example.com" > participants/session-XXXXX/votre.nom.pub
+echo "ssh-ed25519 AAAA..." > participants/session-XXXXX/votre.nom.pub
 
 # Commiter et pousser
 git add participants/session-XXXXX/votre.nom.pub
@@ -70,11 +76,11 @@ git push
 Chaque fichier doit contenir **une seule ligne** avec :
 - Type de clé : `ssh-ed25519`
 - La clé publique encodée en base64
-- (Optionnel) Un commentaire/email
+- (Optionnel) Un commentaire (SANS email)
 
 **Exemple de contenu valide :**
 ```
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl john.doe@example.com
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
 ```
 
 **Note :** Les fichiers `example.user.pub.example` dans ce dépôt sont des exemples. Pour les utiliser, renommez-les en `.pub` et remplacez leur contenu par votre clé réelle.

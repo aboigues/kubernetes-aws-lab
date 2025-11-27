@@ -41,10 +41,22 @@ locals {
   ssh_key_files = var.session_name != "" ? fileset(local.session_dir, "*.pub") : fileset(local.participants_dir, "*.pub")
 
   # Create a map of participant name to SSH public key
+  # Transform filename from "prenom.nom.pub" to discrete format "prenom.no"
   participants = {
     for file in local.ssh_key_files :
-    replace(file, ".pub", "") => file
+    local.discrete_names[file] => file
     if file != "README.md" && file != "example.user.pub"
+  }
+
+  # Generate discrete participant names (prenom + 2 letters of nom)
+  # Format: prenom.nom.pub -> prenom.no
+  discrete_names = {
+    for file in local.ssh_key_files :
+    file => (
+      length(split(".", replace(file, ".pub", ""))) >= 2 ?
+      "${split(".", replace(file, ".pub", ""))[0]}.${substr(split(".", replace(file, ".pub", ""))[1], 0, 2)}" :
+      replace(file, ".pub", "")
+    )
   }
 
   # Read SSH keys content
