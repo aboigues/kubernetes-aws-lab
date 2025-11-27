@@ -53,7 +53,7 @@ variable "project_name" {
 }
 
 variable "session_name" {
-  description = "Training session identifier (e.g., session-121323-nov2025). Used for directory structure and AWS cost tracking tags."
+  description = "Training session identifier (e.g., session-nov-2025, session-dec-2025). Used for directory structure and AWS cost tracking tags. Format is flexible - use what works for your organization."
   type        = string
   default     = ""
 }

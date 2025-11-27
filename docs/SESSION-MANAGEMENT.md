@@ -17,12 +17,12 @@ Le système de sessions permet de :
 Créez un sous-répertoire dans `participants/` pour chaque session :
 
 ```bash
-# Format recommandé: session-DDMMYY-moisANNEE
-mkdir -p participants/session-121323-nov2025
+# Format recommandé: session-MOIS-ANNEE (simple et lisible)
+mkdir -p participants/session-nov-2025
 
 # Créer le README de la session
-cat > participants/session-121323-nov2025/README.md << 'EOF'
-# Session: session-121323-nov2025
+cat > participants/session-nov-2025/README.md << 'EOF'
+# Session: session-nov-2025
 
 ## Informations de la session
 - **Date**: 12-13 Novembre 2025
@@ -37,16 +37,19 @@ EOF
 ### Naming Convention
 
 Le nom du répertoire de session sera utilisé comme :
-1. **Tag AWS** : `Session = session-121323-nov2025`
+1. **Tag AWS** : `Session = session-nov-2025`
 2. **Filtre dans AWS Cost Explorer** pour le suivi des dépenses
 3. **Identifiant** dans les outputs Terraform
 
-**Format recommandé** : `session-DDMMYY-moisANNEE`
+**Format recommandé** : `session-MOIS-ANNEE` (ou tout format descriptif de votre choix)
 
 Exemples :
-- `session-121323-nov2025`
-- `session-050608-juin2025`
+- `session-nov-2025` (recommandé : simple et lisible)
+- `session-dec-2025`
 - `session-winter-2025`
+- `session-formation-k8s-q4-2025`
+
+> **Note** : Le format est flexible - utilisez ce qui convient le mieux à votre organisation. L'important est d'être cohérent et descriptif.
 
 ## 2. Collecter les clés SSH des participants
 
@@ -57,13 +60,13 @@ Les participants déposent leurs clés dans le répertoire de session :
 ssh-keygen -t ed25519 -C "participant@example.com"
 
 # Et les déposent dans le répertoire de session
-cat ~/.ssh/id_ed25519.pub > participants/session-121323-nov2025/jean.martin.pub
+cat ~/.ssh/id_ed25519.pub > participants/session-nov-2025/jean.martin.pub
 ```
 
 Structure finale :
 ```
 participants/
-└── session-121323-nov2025/
+└── session-nov-2025/
     ├── README.md
     ├── jean.martin.pub
     ├── marie.dubois.pub
@@ -77,7 +80,7 @@ Créez ou modifiez `terraform/terraform.tfvars` :
 
 ```hcl
 # Session identifier - MUST match the directory name
-session_name = "session-121323-nov2025"
+session_name = "session-nov-2025"
 
 # AWS Configuration
 aws_region = "eu-west-1"
@@ -117,7 +120,7 @@ terraform apply
 Terraform va :
 1. Lire toutes les clés `.pub` du répertoire de session
 2. Créer un cluster par participant
-3. Taguer TOUTES les ressources AWS avec `Session = session-121323-nov2025`
+3. Taguer TOUTES les ressources AWS avec `Session = session-nov-2025`
 
 ## 5. Distribuer les accès aux participants
 
@@ -154,7 +157,7 @@ Kubernetes Lab Access Information
 =================================================
 
 Participant: jean.martin
-Session: session-121323-nov2025
+Session: session-nov-2025
 
 Master Node: 54.123.45.67
 
@@ -209,7 +212,7 @@ Happy Learning!
 1. Accédez à **AWS Cost Explorer**
 2. Cliquez sur **Filters**
 3. Sélectionnez **Tag** → **Session**
-4. Choisissez `session-121323-nov2025`
+4. Choisissez `session-nov-2025`
 5. Sélectionnez la période de la formation
 
 Vous verrez tous les coûts liés uniquement à cette session.
@@ -224,10 +227,10 @@ terraform output session_info
 Output :
 ```json
 {
-  "session_name": "session-121323-nov2025",
+  "session_name": "session-nov-2025",
   "participant_count": 10,
   "total_instances": 30,
-  "aws_cost_explorer_filter": "Tag: Session = session-121323-nov2025"
+  "aws_cost_explorer_filter": "Tag: Session = session-nov-2025"
 }
 ```
 
@@ -243,7 +246,7 @@ aws ce get-cost-and-usage \
 {
   "Tags": {
     "Key": "Session",
-    "Values": ["session-121323-nov2025"]
+    "Values": ["session-nov-2025"]
   }
 }
 EOF
@@ -265,9 +268,9 @@ terraform destroy
 
 ```bash
 # Sauvegarder les informations
-mkdir -p archives/session-121323-nov2025
-cp -r participant-access archives/session-121323-nov2025/
-cp terraform/terraform.tfstate archives/session-121323-nov2025/
+mkdir -p archives/session-nov-2025
+cp -r participant-access archives/session-nov-2025/
+cp terraform/terraform.tfstate archives/session-nov-2025/
 ```
 
 ## Multiples sessions en parallèle
@@ -280,15 +283,15 @@ Pour gérer plusieurs sessions simultanément, utilisez des **Terraform Workspac
 cd terraform
 
 # Créer un workspace par session
-terraform workspace new session-121323-nov2025
-terraform workspace new session-200125-jan2025
+terraform workspace new session-nov-2025
+terraform workspace new session-jan-2026
 
 # Basculer entre sessions
-terraform workspace select session-121323-nov2025
-terraform apply -var="session_name=session-121323-nov2025"
+terraform workspace select session-nov-2025
+terraform apply -var="session_name=session-nov-2025"
 
-terraform workspace select session-200125-jan2025
-terraform apply -var="session_name=session-200125-jan2025"
+terraform workspace select session-jan-2026
+terraform apply -var="session_name=session-jan-2026"
 ```
 
 ### Option 2 : Répertoires séparés
@@ -296,11 +299,11 @@ terraform apply -var="session_name=session-200125-jan2025"
 ```bash
 # Structure
 terraform-sessions/
-├── session-121323-nov2025/
+├── session-nov-2025/
 │   ├── main.tf -> ../../terraform/main.tf (symlink)
 │   ├── terraform.tfvars
 │   └── .terraform/
-└── session-200125-jan2025/
+└── session-jan-2026/
     ├── main.tf -> ../../terraform/main.tf (symlink)
     ├── terraform.tfvars
     └── .terraform/
@@ -332,7 +335,7 @@ terraform-sessions/
 
 ```bash
 # Vérifier que les clés sont bien dans le bon répertoire
-ls -la participants/session-121323-nov2025/*.pub
+ls -la participants/session-nov-2025/*.pub
 
 # Vérifier la configuration session_name
 grep session_name terraform/terraform.tfvars
@@ -346,7 +349,7 @@ grep session_name terraform/terraform.tfvars
 ```bash
 # Vérifier les tags EC2
 aws ec2 describe-instances \
-  --filters "Name=tag:Session,Values=session-121323-nov2025" \
+  --filters "Name=tag:Session,Values=session-nov-2025" \
   --query 'Reservations[].Instances[].Tags'
 ```
 
@@ -369,14 +372,14 @@ aws ec2 describe-instances \
 
 ```bash
 # 1. Créer la session
-mkdir -p participants/session-121323-nov2025
+mkdir -p participants/session-nov-2025
 
 # 2. Les participants ajoutent leurs clés
 # (via PR ou accès direct au repo)
 
 # 3. Configurer Terraform
 cat > terraform/terraform.tfvars << 'EOF'
-session_name = "session-121323-nov2025"
+session_name = "session-nov-2025"
 aws_region = "eu-west-1"
 EOF
 
@@ -400,8 +403,8 @@ cd terraform
 terraform destroy
 
 # 8. Archiver
-mkdir -p archives/session-121323-nov2025
-mv participant-access archives/session-121323-nov2025/
+mkdir -p archives/session-nov-2025
+mv participant-access archives/session-nov-2025/
 ```
 
 ## Support

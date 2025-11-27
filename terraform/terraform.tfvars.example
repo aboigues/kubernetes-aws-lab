@@ -5,9 +5,10 @@ aws_region = "eu-west-1"
 
 # Session Configuration (IMPORTANT for cost tracking)
 # This should match your session directory name in participants/
-# Example: participants/session-121323-nov2025/
+# Recommended format: session-MOIS-ANNEE (e.g., session-nov-2025, session-dec-2025)
+# You can use any descriptive format that suits your organization
 # Leave empty ("") to use participants at root level
-session_name = "session-121323-nov2025"
+session_name = "session-nov-2025"
 
 # VPC Configuration
 vpc_cidr           = "10.0.0.0/16"

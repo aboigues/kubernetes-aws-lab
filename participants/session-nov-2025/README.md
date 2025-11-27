@@ -1,4 +1,4 @@
-# Session: session-121323-nov2025
+# Session: session-nov-2025
 
 ## Informations de la session
 
@@ -12,7 +12,7 @@ Déposez vos clés SSH publiques dans ce répertoire :
 
 ```bash
 # Format: prenom.nom.pub
-participants/session-121323-nov2025/prenom.nom.pub
+participants/session-nov-2025/prenom.nom.pub
 ```
 
 ## Accès après déploiement
@@ -22,6 +22,6 @@ Les informations d'accès seront générées automatiquement après le déploiem
 ## Tags AWS
 
 Cette session est identifiée par le tag AWS :
-- **Session**: `session-121323-nov2025`
+- **Session**: `session-nov-2025`
 
 Utilisez ce tag pour suivre les coûts AWS associés à cette session dans AWS Cost Explorer.
