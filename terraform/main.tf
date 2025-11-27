@@ -17,11 +17,16 @@ provider "aws" {
   region = var.aws_region
 
   default_tags {
-    tags = {
-      Project     = var.project_name
-      ManagedBy   = "Terraform"
-      Environment = "lab"
-    }
+    tags = merge(
+      {
+        Project     = var.project_name
+        ManagedBy   = "Terraform"
+        Environment = "lab"
+      },
+      var.session_name != "" ? {
+        Session = var.session_name
+      } : {}
+    )
   }
 }
 
@@ -29,8 +34,11 @@ provider "aws" {
 locals {
   participants_dir = "../participants"
 
-  # Read all .pub files and extract participant names
-  ssh_key_files = fileset(local.participants_dir, "*.pub")
+  # Determine the directory to use based on session_name
+  session_dir = var.session_name != "" ? "${local.participants_dir}/${var.session_name}" : local.participants_dir
+
+  # Read all .pub files from the appropriate directory
+  ssh_key_files = var.session_name != "" ? fileset(local.session_dir, "*.pub") : fileset(local.participants_dir, "*.pub")
 
   # Create a map of participant name to SSH public key
   participants = {
@@ -42,7 +50,7 @@ locals {
   # Read SSH keys content
   ssh_keys = {
     for name, file in local.participants :
-    name => trimspace(file("${local.participants_dir}/${file}"))
+    name => trimspace(file("${local.session_dir}/${file}"))
   }
 }
 
@@ -72,5 +80,8 @@ module "k8s_cluster" {
   worker_count         = var.worker_count
   kubernetes_version   = var.kubernetes_version
 
-  project_name = var.project_name
+  project_name       = var.project_name
+  session_name       = var.session_name
+  allowed_ssh_cidrs  = var.allowed_ssh_cidrs
+  allowed_api_cidrs  = var.allowed_api_cidrs
 }

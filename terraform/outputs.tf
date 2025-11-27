@@ -27,3 +27,13 @@ output "participant_access_info" {
     EOT
   ])
 }
+
+output "session_info" {
+  description = "Session information for cost tracking and management"
+  value = {
+    session_name       = var.session_name != "" ? var.session_name : "default"
+    participant_count  = length(module.k8s_cluster)
+    total_instances    = length(module.k8s_cluster) * (1 + var.worker_count)
+    aws_cost_explorer_filter = var.session_name != "" ? "Tag: Session = ${var.session_name}" : "Tag: Project = ${var.project_name}"
+  }
+}

@@ -25,7 +25,7 @@ resource "aws_security_group" "k8s_cluster" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.allowed_ssh_cidrs
     description = "SSH access"
   }
 
@@ -34,7 +34,7 @@ resource "aws_security_group" "k8s_cluster" {
     from_port   = 6443
     to_port     = 6443
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.allowed_api_cidrs
     description = "Kubernetes API server"
   }
 
@@ -110,10 +110,13 @@ resource "aws_security_group" "k8s_cluster" {
     description = "All outbound traffic"
   }
 
-  tags = {
-    Name        = "${var.project_name}-${var.participant_name}-k8s-sg"
-    Participant = var.participant_name
-  }
+  tags = merge(
+    {
+      Name        = "${var.project_name}-${var.participant_name}-k8s-sg"
+      Participant = var.participant_name
+    },
+    var.session_name != "" ? { Session = var.session_name } : {}
+  )
 }
 
 # SSH Key pair for the participant
@@ -121,10 +124,13 @@ resource "aws_key_pair" "participant" {
   key_name   = "${var.project_name}-${var.participant_name}"
   public_key = var.ssh_public_key
 
-  tags = {
-    Name        = "${var.project_name}-${var.participant_name}"
-    Participant = var.participant_name
-  }
+  tags = merge(
+    {
+      Name        = "${var.project_name}-${var.participant_name}"
+      Participant = var.participant_name
+    },
+    var.session_name != "" ? { Session = var.session_name } : {}
+  )
 }
 
 # Master node
@@ -147,12 +153,15 @@ resource "aws_instance" "master" {
     pod_network_cidr   = "10.${100 + local.participant_cidr_offset}.0.0/16"
   })
 
-  tags = {
-    Name        = "${var.project_name}-${var.participant_name}-master"
-    Participant = var.participant_name
-    Role        = "master"
-    Cluster     = "${var.project_name}-${var.participant_name}"
-  }
+  tags = merge(
+    {
+      Name        = "${var.project_name}-${var.participant_name}-master"
+      Participant = var.participant_name
+      Role        = "master"
+      Cluster     = "${var.project_name}-${var.participant_name}"
+    },
+    var.session_name != "" ? { Session = var.session_name } : {}
+  )
 }
 
 # Worker nodes
@@ -176,12 +185,15 @@ resource "aws_instance" "worker" {
     master_private_ip  = aws_instance.master.private_ip
   })
 
-  tags = {
-    Name        = "${var.project_name}-${var.participant_name}-worker-${count.index + 1}"
-    Participant = var.participant_name
-    Role        = "worker"
-    Cluster     = "${var.project_name}-${var.participant_name}"
-  }
+  tags = merge(
+    {
+      Name        = "${var.project_name}-${var.participant_name}-worker-${count.index + 1}"
+      Participant = var.participant_name
+      Role        = "worker"
+      Cluster     = "${var.project_name}-${var.participant_name}"
+    },
+    var.session_name != "" ? { Session = var.session_name } : {}
+  )
 
   depends_on = [aws_instance.master]
 }
