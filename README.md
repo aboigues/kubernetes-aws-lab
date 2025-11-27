@@ -36,7 +36,7 @@ Chaque participant doit déposer sa clé SSH publique dans le répertoire de ses
 
 ```bash
 # Générer une clé ed25519 si nécessaire
-ssh-keygen -t ed25519 -C "votre.email@example.com"
+ssh-keygen -t ed25519
 
 # Créer votre fichier de clé dans le répertoire de session
 cat ~/.ssh/id_ed25519.pub > participants/session-XXXXX/prenom.nom.pub
@@ -46,6 +46,8 @@ git add participants/session-XXXXX/prenom.nom.pub
 git commit -m "Add SSH key for prenom.nom"
 git push
 ```
+
+**Note :** Le nom du fichier sera automatiquement transformé en format discret (prénom + 2 lettres du nom) pour préserver la confidentialité.
 
 Voir [participants/README.md](participants/README.md) pour plus de détails.
 
