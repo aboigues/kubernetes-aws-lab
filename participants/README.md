@@ -37,9 +37,9 @@ ssh-keygen -t ed25519 -C "votre.email@example.com"
 cat ~/.ssh/id_ed25519.pub
 ```
 
-### 3. Créer votre fichier dans ce dossier
+### 3. Créer votre fichier dans le répertoire de session
 
-Créez un fichier nommé `prenom.nom.pub` contenant votre clé publique.
+Créez un fichier nommé `prenom.nom.pub` contenant votre clé publique dans le répertoire de session approprié.
 
 **Format du nom de fichier :** `prenom.nom.pub`
 
@@ -47,9 +47,7 @@ Créez un fichier nommé `prenom.nom.pub` contenant votre clé publique.
 
 **Contenu :** Votre clé publique ed25519 complète (commence par `ssh-ed25519`)
 
-**Emplacement** :
-- Sans session : `participants/votre.nom.pub`
-- Avec session : `participants/session-XXXXX/votre.nom.pub`
+**Emplacement recommandé** : `participants/session-XXXXX/votre.nom.pub`
 
 ### 4. Soumettre votre clé
 
@@ -58,14 +56,11 @@ Créez un fichier nommé `prenom.nom.pub` contenant votre clé publique.
 git clone <repository-url>
 cd kubernetes-aws-lab
 
-# Option 1 : Sans session
-echo "ssh-ed25519 AAAA... votre-email@example.com" > participants/votre.nom.pub
-
-# Option 2 : Avec session
-echo "ssh-ed25519 AAAA... votre-email@example.com" > participants/session-nov-2025/votre.nom.pub
+# Déposer votre clé dans le répertoire de session (remplacer session-XXXXX par le nom de votre session)
+echo "ssh-ed25519 AAAA... votre-email@example.com" > participants/session-XXXXX/votre.nom.pub
 
 # Commiter et pousser
-git add participants/
+git add participants/session-XXXXX/votre.nom.pub
 git commit -m "Add SSH key for votre.nom"
 git push
 ```
@@ -82,12 +77,18 @@ Chaque fichier doit contenir **une seule ligne** avec :
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl john.doe@example.com
 ```
 
+**Note :** Les fichiers `example.user.pub.example` dans ce dépôt sont des exemples. Pour les utiliser, renommez-les en `.pub` et remplacez leur contenu par votre clé réelle.
+
 ## Validation
 
 Pour vérifier que votre clé est valide avant de la soumettre :
 
 ```bash
-./scripts/validate-ssh-keys.sh participants/votre.nom.pub
+# Valider une clé spécifique
+./scripts/validate-ssh-keys.sh participants/session-XXXXX/votre.nom.pub
+
+# Valider toutes les clés d'une session
+./scripts/validate-ssh-keys.sh participants/session-XXXXX
 ```
 
 ## Accès à votre cluster
