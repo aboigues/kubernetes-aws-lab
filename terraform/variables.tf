@@ -51,3 +51,27 @@ variable "project_name" {
   type        = string
   default     = "k8s-lab"
 }
+
+variable "session_name" {
+  description = "Training session identifier (e.g., session-121323-nov2025). Used for directory structure and AWS cost tracking tags."
+  type        = string
+  default     = ""
+}
+
+variable "vpc_cidr_configurable" {
+  description = "Enable custom VPC CIDR configuration per session"
+  type        = bool
+  default     = false
+}
+
+variable "allowed_ssh_cidrs" {
+  description = "List of CIDR blocks allowed to SSH into instances (default: 0.0.0.0/0)"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
+variable "allowed_api_cidrs" {
+  description = "List of CIDR blocks allowed to access Kubernetes API (default: 0.0.0.0/0)"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}

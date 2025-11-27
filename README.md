@@ -91,15 +91,23 @@ kubectl get pods --all-namespaces
 ```
 kubernetes-aws-lab/
 ├── README.md                          # Ce fichier
+├── docs/                              # Documentation
+│   ├── SESSION-MANAGEMENT.md          # Guide gestion des sessions
+│   └── PARTICIPANT-ACCESS-SOLUTIONS.md # Solutions de distribution des accès
 ├── participants/                      # Clés SSH publiques des participants
 │   ├── README.md                      # Instructions pour les participants
-│   └── prenom.nom.pub                 # Clé SSH de chaque participant
+│   ├── example.user.pub               # Exemple de clé
+│   └── session-DDMMYY-moisANNEE/     # Répertoire par session (optionnel)
+│       ├── README.md                  # Infos de la session
+│       └── prenom.nom.pub             # Clés des participants
 ├── scripts/
-│   └── validate-ssh-keys.sh           # Script de validation des clés
+│   ├── validate-ssh-keys.sh           # Script de validation des clés
+│   └── generate-access-info.sh        # Génération des infos d'accès
 └── terraform/                         # Infrastructure Terraform
     ├── main.tf                        # Configuration principale
     ├── variables.tf                   # Variables Terraform
     ├── outputs.tf                     # Outputs Terraform
+    ├── terraform.tfvars.example       # Exemple de configuration
     └── modules/
         ├── vpc/                       # Module VPC partagé
         │   ├── main.tf
@@ -117,14 +125,22 @@ kubernetes-aws-lab/
 
 ### Variables Terraform principales
 
-Vous pouvez personnaliser le déploiement en modifiant `terraform/variables.tf` ou en créant un fichier `terraform.tfvars` :
+Vous pouvez personnaliser le déploiement en créant un fichier `terraform.tfvars` (voir `terraform.tfvars.example`) :
 
 ```hcl
+# Session identifier (pour le suivi des coûts)
+session_name = "session-121323-nov2025"
+
 # Région AWS
 aws_region = "eu-west-1"
 
-# CIDR du VPC
+# Configuration réseau
 vpc_cidr = "10.0.0.0/16"
+availability_zones = ["eu-west-1a", "eu-west-1b"]
+
+# Sécurité - Restreindre l'accès SSH et API (recommandé)
+allowed_ssh_cidrs = ["0.0.0.0/0"]  # IPs autorisées pour SSH
+allowed_api_cidrs = ["0.0.0.0/0"]  # IPs autorisées pour Kubernetes API
 
 # Type d'instances
 instance_type_master = "t3.medium"  # 2 vCPU, 4 GB RAM
@@ -135,6 +151,9 @@ worker_count = 2
 
 # Version Kubernetes
 kubernetes_version = "1.28"
+
+# Nom du projet
+project_name = "k8s-lab"
 ```
 
 ### Coûts estimés
@@ -209,6 +228,55 @@ Vérifier que Calico est bien déployé :
 
 ```bash
 kubectl get pods -n kube-system | grep calico
+```
+
+## Gestion des Sessions de Formation
+
+Ce projet supporte maintenant la gestion de sessions de formation avec :
+
+- **📁 Organisation par session** : Créez des sous-répertoires dans `participants/` pour chaque session
+- **💰 Suivi des coûts AWS** : Tags automatiques par session pour AWS Cost Explorer
+- **📨 Distribution automatique** : Script pour générer et distribuer les accès aux participants
+- **🔒 Sécurité configurable** : VPC et Security Groups paramétrables
+
+### Démarrage rapide pour une session
+
+```bash
+# 1. Créer une session
+mkdir -p participants/session-121323-nov2025
+
+# 2. Les participants ajoutent leurs clés
+# participants/session-121323-nov2025/prenom.nom.pub
+
+# 3. Configurer Terraform
+cat > terraform/terraform.tfvars << EOF
+session_name = "session-121323-nov2025"
+allowed_ssh_cidrs = ["0.0.0.0/0"]  # ou IP spécifique
+allowed_api_cidrs = ["0.0.0.0/0"]
+EOF
+
+# 4. Déployer
+cd terraform && terraform apply
+
+# 5. Distribuer les accès
+cd .. && ./scripts/generate-access-info.sh
+```
+
+### Documentation détaillée
+
+- **[Guide de gestion des sessions](docs/SESSION-MANAGEMENT.md)** - Configuration et organisation des sessions
+- **[Solutions de communication](docs/PARTICIPANT-ACCESS-SOLUTIONS.md)** - Comment distribuer les accès aux participants
+
+### Suivi des coûts AWS
+
+Toutes les ressources sont automatiquement taguées avec `Session = <nom-session>` :
+
+```bash
+# Dans AWS Cost Explorer
+Filtrer par Tag: Session = session-121323-nov2025
+
+# Ou via Terraform
+cd terraform && terraform output session_info
 ```
 
 ## Améliorations possibles

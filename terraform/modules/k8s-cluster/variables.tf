@@ -47,3 +47,21 @@ variable "project_name" {
   description = "Project name for resource naming"
   type        = string
 }
+
+variable "session_name" {
+  description = "Training session identifier"
+  type        = string
+  default     = ""
+}
+
+variable "allowed_ssh_cidrs" {
+  description = "List of CIDR blocks allowed to SSH into instances"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
+variable "allowed_api_cidrs" {
+  description = "List of CIDR blocks allowed to access Kubernetes API"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
