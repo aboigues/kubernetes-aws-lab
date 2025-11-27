@@ -98,16 +98,9 @@ echo "SSH Keys Validation"
 echo "================================"
 echo ""
 
-# If a specific file is provided, validate only that file
-if [[ $# -eq 1 ]]; then
-    if [[ -f "$1" ]]; then
-        validate_key_file "$1"
-    else
-        echo -e "${RED}Error:${NC} File not found: $1"
-        exit 1
-    fi
-else
-    # Validate all .pub files in participants directory
+# Determine what to validate based on arguments
+if [[ $# -eq 0 ]]; then
+    # No arguments: validate all .pub files in participants directory (root level only)
     participants_dir="participants"
 
     if [[ ! -d "$participants_dir" ]]; then
@@ -115,10 +108,38 @@ else
         exit 1
     fi
 
-    # Find all .pub files
+    echo "Validating keys in: $participants_dir (root level)"
+    echo ""
+
+    # Find all .pub files at root level only
     while IFS= read -r -d '' file; do
         validate_key_file "$file"
     done < <(find "$participants_dir" -maxdepth 1 -type f -name "*.pub" -print0 | sort -z)
+
+elif [[ $# -eq 1 ]]; then
+    if [[ -f "$1" ]]; then
+        # Single file validation
+        validate_key_file "$1"
+    elif [[ -d "$1" ]]; then
+        # Directory validation
+        echo "Validating keys in: $1"
+        echo ""
+
+        # Find all .pub files in the specified directory (maxdepth 1)
+        while IFS= read -r -d '' file; do
+            validate_key_file "$file"
+        done < <(find "$1" -maxdepth 1 -type f -name "*.pub" -print0 | sort -z)
+    else
+        echo -e "${RED}Error:${NC} File or directory not found: $1"
+        exit 1
+    fi
+else
+    echo -e "${RED}Error:${NC} Too many arguments"
+    echo "Usage: $0 [file.pub|directory]"
+    echo "  No arguments: validate all keys in participants/"
+    echo "  file.pub: validate a specific key file"
+    echo "  directory: validate all keys in the specified directory"
+    exit 1
 fi
 
 echo ""

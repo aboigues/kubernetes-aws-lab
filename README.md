@@ -32,17 +32,17 @@ Ce projet permet de déployer automatiquement plusieurs clusters Kubernetes mult
 
 ### 1. Déposer votre clé SSH publique
 
-Chaque participant doit déposer sa clé SSH publique :
+Chaque participant doit déposer sa clé SSH publique dans le répertoire de session approprié :
 
 ```bash
 # Générer une clé ed25519 si nécessaire
 ssh-keygen -t ed25519 -C "votre.email@example.com"
 
-# Créer votre fichier de clé
-cat ~/.ssh/id_ed25519.pub > participants/prenom.nom.pub
+# Créer votre fichier de clé dans le répertoire de session
+cat ~/.ssh/id_ed25519.pub > participants/session-XXXXX/prenom.nom.pub
 
 # Commiter
-git add participants/prenom.nom.pub
+git add participants/session-XXXXX/prenom.nom.pub
 git commit -m "Add SSH key for prenom.nom"
 git push
 ```
@@ -52,6 +52,10 @@ Voir [participants/README.md](participants/README.md) pour plus de détails.
 ### 2. Valider les clés SSH
 
 ```bash
+# Valider les clés d'une session spécifique
+./scripts/validate-ssh-keys.sh participants/session-XXXXX
+
+# Ou valider toutes les clés dans participants/ (racine uniquement)
 ./scripts/validate-ssh-keys.sh
 ```
 
@@ -96,9 +100,10 @@ kubernetes-aws-lab/
 │   └── PARTICIPANT-ACCESS-SOLUTIONS.md # Solutions de distribution des accès
 ├── participants/                      # Clés SSH publiques des participants
 │   ├── README.md                      # Instructions pour les participants
-│   ├── example.user.pub               # Exemple de clé
-│   └── session-XXXXX/                 # Répertoire par session (optionnel)
+│   ├── example.user.pub.example       # Exemple de clé (à renommer en .pub)
+│   └── session-XXXXX/                 # Répertoire par session
 │       ├── README.md                  # Infos de la session
+│       ├── example.user.pub.example   # Exemple de clé (à renommer en .pub)
 │       └── prenom.nom.pub             # Clés des participants
 ├── scripts/
 │   ├── validate-ssh-keys.sh           # Script de validation des clés
@@ -196,13 +201,13 @@ kubectl get services
 
 ### Ajouter un participant
 
-1. Le participant ajoute sa clé dans `participants/`
-2. Valider avec `./scripts/validate-ssh-keys.sh`
+1. Le participant ajoute sa clé dans `participants/session-XXXXX/`
+2. Valider avec `./scripts/validate-ssh-keys.sh participants/session-XXXXX`
 3. Appliquer les changements : `cd terraform && terraform apply`
 
 ### Retirer un participant
 
-1. Supprimer le fichier de clé du participant
+1. Supprimer le fichier de clé du participant dans `participants/session-XXXXX/`
 2. Appliquer les changements : `cd terraform && terraform apply`
 
 Le cluster du participant sera automatiquement détruit.
