@@ -97,7 +97,7 @@ kubernetes-aws-lab/
 ├── participants/                      # Clés SSH publiques des participants
 │   ├── README.md                      # Instructions pour les participants
 │   ├── example.user.pub               # Exemple de clé
-│   └── session-DDMMYY-moisANNEE/     # Répertoire par session (optionnel)
+│   └── session-XXXXX/                 # Répertoire par session (optionnel)
 │       ├── README.md                  # Infos de la session
 │       └── prenom.nom.pub             # Clés des participants
 ├── scripts/
@@ -129,7 +129,7 @@ Vous pouvez personnaliser le déploiement en créant un fichier `terraform.tfvar
 
 ```hcl
 # Session identifier (pour le suivi des coûts)
-session_name = "session-121323-nov2025"
+session_name = "session-nov-2025"
 
 # Région AWS
 aws_region = "eu-west-1"
@@ -243,14 +243,14 @@ Ce projet supporte maintenant la gestion de sessions de formation avec :
 
 ```bash
 # 1. Créer une session
-mkdir -p participants/session-121323-nov2025
+mkdir -p participants/session-nov-2025
 
 # 2. Les participants ajoutent leurs clés
-# participants/session-121323-nov2025/prenom.nom.pub
+# participants/session-nov-2025/prenom.nom.pub
 
 # 3. Configurer Terraform
 cat > terraform/terraform.tfvars << EOF
-session_name = "session-121323-nov2025"
+session_name = "session-nov-2025"
 allowed_ssh_cidrs = ["0.0.0.0/0"]  # ou IP spécifique
 allowed_api_cidrs = ["0.0.0.0/0"]
 EOF
@@ -273,7 +273,7 @@ Toutes les ressources sont automatiquement taguées avec `Session = <nom-session
 
 ```bash
 # Dans AWS Cost Explorer
-Filtrer par Tag: Session = session-121323-nov2025
+Filtrer par Tag: Session = session-nov-2025
 
 # Ou via Terraform
 cd terraform && terraform output session_info

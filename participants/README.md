@@ -1,5 +1,28 @@
 # Dépôt des clés SSH publiques
 
+## Organisation par sessions
+
+Ce répertoire peut être organisé de deux façons :
+
+### Option 1 : Clés directement dans `participants/`
+Pour une utilisation simple ou des formations ponctuelles, déposez directement votre clé ici.
+
+### Option 2 : Organisation par session (recommandé pour les formations)
+Pour gérer plusieurs sessions de formation, organisez les clés dans des sous-répertoires :
+
+```
+participants/
+├── session-nov-2025/
+│   ├── README.md
+│   ├── jean.martin.pub
+│   └── marie.dupont.pub
+└── session-dec-2025/
+    ├── README.md
+    └── pierre.durand.pub
+```
+
+Voir [docs/SESSION-MANAGEMENT.md](../docs/SESSION-MANAGEMENT.md) pour plus de détails sur la gestion des sessions.
+
 ## Comment déposer votre clé publique
 
 ### 1. Générer votre clé SSH ed25519 (si nécessaire)
@@ -24,6 +47,10 @@ Créez un fichier nommé `prenom.nom.pub` contenant votre clé publique.
 
 **Contenu :** Votre clé publique ed25519 complète (commence par `ssh-ed25519`)
 
+**Emplacement** :
+- Sans session : `participants/votre.nom.pub`
+- Avec session : `participants/session-XXXXX/votre.nom.pub`
+
 ### 4. Soumettre votre clé
 
 ```bash
@@ -31,11 +58,14 @@ Créez un fichier nommé `prenom.nom.pub` contenant votre clé publique.
 git clone <repository-url>
 cd kubernetes-aws-lab
 
-# Créer votre fichier
+# Option 1 : Sans session
 echo "ssh-ed25519 AAAA... votre-email@example.com" > participants/votre.nom.pub
 
+# Option 2 : Avec session
+echo "ssh-ed25519 AAAA... votre-email@example.com" > participants/session-nov-2025/votre.nom.pub
+
 # Commiter et pousser
-git add participants/votre.nom.pub
+git add participants/
 git commit -m "Add SSH key for votre.nom"
 git push
 ```

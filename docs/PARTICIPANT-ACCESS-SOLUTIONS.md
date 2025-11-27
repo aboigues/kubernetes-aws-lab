@@ -321,7 +321,7 @@ cat > participant-access/index.html << 'EOF'
 <body>
     <div class="header">
         <h1>🎓 Kubernetes Lab Access Portal</h1>
-        <p>Session: session-121323-nov2025</p>
+        <p>Session: session-nov-2025</p>
     </div>
 
     <input type="text" id="searchBox" class="search-box" placeholder="🔍 Rechercher votre nom...">
@@ -534,7 +534,7 @@ Pour une session de formation typique :
 #!/bin/bash
 # scripts/distribute-access.sh
 
-SESSION="session-121323-nov2025"
+SESSION="session-nov-2025"
 SESSION_DATE="12-13 Novembre 2025"
 
 echo "🚀 Generating access information..."
