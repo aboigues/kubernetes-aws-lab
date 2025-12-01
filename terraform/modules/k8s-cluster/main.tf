@@ -1,3 +1,9 @@
+# Generate internal SSH key for cluster communication
+resource "tls_private_key" "cluster_internal" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
 # Get latest Ubuntu 22.04 LTS AMI
 data "aws_ami" "ubuntu" {
   most_recent = true
@@ -148,9 +154,10 @@ resource "aws_instance" "master" {
   }
 
   user_data = templatefile("${path.module}/user-data-master.sh", {
-    kubernetes_version = var.kubernetes_version
-    cluster_name       = "${var.project_name}-${var.participant_name}"
-    pod_network_cidr   = "10.${100 + local.participant_cidr_offset}.0.0/16"
+    kubernetes_version       = var.kubernetes_version
+    cluster_name             = "${var.project_name}-${var.participant_name}"
+    pod_network_cidr         = "10.${100 + local.participant_cidr_offset}.0.0/16"
+    cluster_internal_ssh_pub = tls_private_key.cluster_internal.public_key_openssh
   })
 
   tags = merge(
@@ -181,8 +188,9 @@ resource "aws_instance" "worker" {
   }
 
   user_data = templatefile("${path.module}/user-data-worker.sh", {
-    kubernetes_version = var.kubernetes_version
-    master_private_ip  = aws_instance.master.private_ip
+    kubernetes_version        = var.kubernetes_version
+    master_private_ip         = aws_instance.master.private_ip
+    cluster_internal_ssh_key  = tls_private_key.cluster_internal.private_key_pem
   })
 
   tags = merge(

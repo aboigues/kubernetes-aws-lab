@@ -6,6 +6,7 @@ set -euxo pipefail
 # Variables
 K8S_VERSION="${kubernetes_version}"
 MASTER_IP="${master_private_ip}"
+CLUSTER_INTERNAL_SSH_KEY="${cluster_internal_ssh_key}"
 
 # Log everything
 exec > >(tee /var/log/user-data.log)
@@ -81,15 +82,30 @@ apt-mark hold kubelet kubeadm kubectl
 # Enable kubelet
 systemctl enable kubelet
 
+# Configure internal SSH key for cluster communication
+mkdir -p /root/.ssh
+cat <<EOF > /root/.ssh/cluster_internal_key
+$CLUSTER_INTERNAL_SSH_KEY
+EOF
+chmod 600 /root/.ssh/cluster_internal_key
+
+# Also configure for ubuntu user
+mkdir -p /home/ubuntu/.ssh
+cat <<EOF > /home/ubuntu/.ssh/cluster_internal_key
+$CLUSTER_INTERNAL_SSH_KEY
+EOF
+chmod 600 /home/ubuntu/.ssh/cluster_internal_key
+chown ubuntu:ubuntu /home/ubuntu/.ssh/cluster_internal_key
+
 # Wait for master node to be ready and get join command
 echo "Waiting for master node to be ready..."
 max_attempts=60
 attempt=0
 
 while [ $attempt -lt $max_attempts ]; do
-    if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 ubuntu@$MASTER_IP "test -f /home/ubuntu/kubeadm-join-command.sh" 2>/dev/null; then
+    if ssh -i /root/.ssh/cluster_internal_key -o StrictHostKeyChecking=no -o ConnectTimeout=5 ubuntu@$MASTER_IP "test -f /home/ubuntu/kubeadm-join-command.sh" 2>/dev/null; then
         echo "Master node is ready!"
-        scp -o StrictHostKeyChecking=no ubuntu@$MASTER_IP:/home/ubuntu/kubeadm-join-command.sh /tmp/kubeadm-join-command.sh
+        scp -i /root/.ssh/cluster_internal_key -o StrictHostKeyChecking=no ubuntu@$MASTER_IP:/home/ubuntu/kubeadm-join-command.sh /tmp/kubeadm-join-command.sh
         break
     fi
     echo "Master not ready yet, waiting... (attempt $((attempt+1))/$max_attempts)"
@@ -105,7 +121,7 @@ if [ -f /tmp/kubeadm-join-command.sh ]; then
     # Configure kubectl for ubuntu user to access the cluster from worker
     echo "Configuring kubectl for ubuntu user..."
     mkdir -p /home/ubuntu/.kube
-    scp -o StrictHostKeyChecking=no ubuntu@$MASTER_IP:/home/ubuntu/.kube/config /home/ubuntu/.kube/config
+    scp -i /home/ubuntu/.ssh/cluster_internal_key -o StrictHostKeyChecking=no ubuntu@$MASTER_IP:/home/ubuntu/.kube/config /home/ubuntu/.kube/config
     chown -R ubuntu:ubuntu /home/ubuntu/.kube
     echo "kubectl configured successfully!"
 else
