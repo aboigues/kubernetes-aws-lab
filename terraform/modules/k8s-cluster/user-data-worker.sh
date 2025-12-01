@@ -144,6 +144,7 @@ else
 fi
 
 # Install useful tools
+apt-get update
 apt-get install -y htop vim net-tools
 
 echo "=== Kubernetes Worker Node Setup Complete ==="
