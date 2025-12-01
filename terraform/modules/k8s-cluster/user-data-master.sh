@@ -7,6 +7,7 @@ set -euxo pipefail
 K8S_VERSION="${kubernetes_version}"
 CLUSTER_NAME="${cluster_name}"
 POD_NETWORK_CIDR="${pod_network_cidr}"
+CLUSTER_INTERNAL_SSH_PUB="${cluster_internal_ssh_pub}"
 
 # Log everything
 exec > >(tee /var/log/user-data.log)
@@ -97,6 +98,11 @@ kubeadm init \
 mkdir -p /home/ubuntu/.kube
 cp /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
 chown -R ubuntu:ubuntu /home/ubuntu/.kube
+
+# Configure internal SSH key for cluster communication
+echo "$CLUSTER_INTERNAL_SSH_PUB" >> /home/ubuntu/.ssh/authorized_keys
+chmod 600 /home/ubuntu/.ssh/authorized_keys
+chown ubuntu:ubuntu /home/ubuntu/.ssh/authorized_keys
 
 # Configure kubectl for root
 export KUBECONFIG=/etc/kubernetes/admin.conf
