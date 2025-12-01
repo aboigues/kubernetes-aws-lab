@@ -202,5 +202,5 @@ resource "aws_instance" "worker" {
 locals {
   # Use a hash of the participant name to generate a unique but deterministic offset (0-155)
   # This ensures each participant gets a unique pod network CIDR: 10.100-255.0.0/16
-  participant_cidr_offset = abs(substr(md5(var.participant_name), 0, 2)) % 156
+  participant_cidr_offset = parseint(substr(md5(var.participant_name), 0, 2), 16) % 156
 }
