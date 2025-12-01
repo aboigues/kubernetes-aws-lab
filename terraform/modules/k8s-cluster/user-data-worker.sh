@@ -101,6 +101,13 @@ if [ -f /tmp/kubeadm-join-command.sh ]; then
     # Join the cluster
     bash /tmp/kubeadm-join-command.sh
     echo "Successfully joined the cluster!"
+
+    # Configure kubectl for ubuntu user to access the cluster from worker
+    echo "Configuring kubectl for ubuntu user..."
+    mkdir -p /home/ubuntu/.kube
+    scp -o StrictHostKeyChecking=no ubuntu@$MASTER_IP:/home/ubuntu/.kube/config /home/ubuntu/.kube/config
+    chown -R ubuntu:ubuntu /home/ubuntu/.kube
+    echo "kubectl configured successfully!"
 else
     echo "ERROR: Could not retrieve join command from master node"
     echo "You will need to manually join this node to the cluster"
