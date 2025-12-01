@@ -102,8 +102,11 @@ echo "Waiting for master node to be ready..."
 max_attempts=60
 attempt=0
 
+# Temporarily disable exit-on-error for the wait loop
+set +e
 while [ $attempt -lt $max_attempts ]; do
-    if ssh -i /root/.ssh/cluster_internal_key -o StrictHostKeyChecking=no -o ConnectTimeout=5 ubuntu@$MASTER_IP "test -f /home/ubuntu/kubeadm-join-command.sh" 2>/dev/null; then
+    ssh -i /root/.ssh/cluster_internal_key -o StrictHostKeyChecking=no -o ConnectTimeout=5 ubuntu@$MASTER_IP "test -f /home/ubuntu/kubeadm-join-command.sh" 2>/dev/null
+    if [ $? -eq 0 ]; then
         echo "Master node is ready!"
         scp -i /root/.ssh/cluster_internal_key -o StrictHostKeyChecking=no ubuntu@$MASTER_IP:/home/ubuntu/kubeadm-join-command.sh /tmp/kubeadm-join-command.sh
         break
@@ -112,6 +115,8 @@ while [ $attempt -lt $max_attempts ]; do
     sleep 10
     ((attempt++))
 done
+# Re-enable exit-on-error
+set -e
 
 if [ -f /tmp/kubeadm-join-command.sh ]; then
     # Join the cluster
@@ -121,9 +126,16 @@ if [ -f /tmp/kubeadm-join-command.sh ]; then
     # Configure kubectl for ubuntu user to access the cluster from worker
     echo "Configuring kubectl for ubuntu user..."
     mkdir -p /home/ubuntu/.kube
+    set +e
     scp -i /home/ubuntu/.ssh/cluster_internal_key -o StrictHostKeyChecking=no ubuntu@$MASTER_IP:/home/ubuntu/.kube/config /home/ubuntu/.kube/config
-    chown -R ubuntu:ubuntu /home/ubuntu/.kube
-    echo "kubectl configured successfully!"
+    if [ $? -eq 0 ]; then
+        chown -R ubuntu:ubuntu /home/ubuntu/.kube
+        echo "kubectl configured successfully!"
+    else
+        echo "Warning: Could not copy kubectl config from master (this is normal if master is still initializing)"
+        echo "You can manually copy it later with: scp ubuntu@$MASTER_IP:/home/ubuntu/.kube/config ~/.kube/config"
+    fi
+    set -e
 else
     echo "ERROR: Could not retrieve join command from master node"
     echo "You will need to manually join this node to the cluster"
