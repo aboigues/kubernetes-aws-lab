@@ -141,6 +141,7 @@ chmod +x /home/ubuntu/cluster-info.sh
 chown ubuntu:ubuntu /home/ubuntu/cluster-info.sh
 
 # Install useful tools
+apt-get update
 apt-get install -y htop vim net-tools
 
 echo "=== Kubernetes Master Node Setup Complete ==="
