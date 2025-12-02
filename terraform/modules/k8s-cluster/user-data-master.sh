@@ -8,6 +8,8 @@ K8S_VERSION="${kubernetes_version}"
 CLUSTER_NAME="${cluster_name}"
 POD_NETWORK_CIDR="${pod_network_cidr}"
 CLUSTER_INTERNAL_SSH_PUB="${cluster_internal_ssh_pub}"
+NODE_NAME="${node_name}"
+PARTICIPANT_NAME="${participant_name}"
 
 # Log everything
 exec > >(tee /var/log/user-data.log)
@@ -17,6 +19,11 @@ echo "=== Starting Kubernetes Master Node Setup ==="
 echo "Kubernetes Version: $K8S_VERSION"
 echo "Cluster Name: $CLUSTER_NAME"
 echo "Pod Network CIDR: $POD_NETWORK_CIDR"
+echo "Node Name: $NODE_NAME"
+
+# Set hostname
+hostnamectl set-hostname "$NODE_NAME"
+echo "127.0.0.1 $NODE_NAME" >> /etc/hosts
 
 # Update system
 apt-get update
@@ -91,7 +98,7 @@ PRIVATE_IP=$(hostname -I | awk '{print $1}')
 kubeadm init \
     --pod-network-cidr=$POD_NETWORK_CIDR \
     --apiserver-advertise-address=$PRIVATE_IP \
-    --node-name=$(hostname) \
+    --node-name=$NODE_NAME \
     --ignore-preflight-errors=NumCPU
 
 # Configure kubectl for ubuntu user
@@ -142,7 +149,65 @@ chown ubuntu:ubuntu /home/ubuntu/cluster-info.sh
 
 # Install useful tools
 apt-get update
-apt-get install -y htop vim net-tools
+apt-get install -y htop vim net-tools figlet
+
+# Create custom MOTD
+rm -f /etc/update-motd.d/*
+cat > /etc/update-motd.d/00-custom-header << 'MOTD_SCRIPT'
+#!/bin/bash
+figlet -w 80 "K8s Master" 2>/dev/null || echo "=== Kubernetes Master Node ==="
+MOTD_SCRIPT
+
+cat > /etc/update-motd.d/10-node-info << 'MOTD_SCRIPT'
+#!/bin/bash
+
+# Colors
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Get system info
+HOSTNAME=$(hostname)
+PRIVATE_IP=$(hostname -I | awk '{print $1}')
+PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "N/A")
+K8S_VERSION=$(kubectl version --short 2>/dev/null | grep Server | awk '{print $3}' || echo "Not available yet")
+
+echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║${NC}  ${CYAN}Node Information${NC}                                             ${BLUE}║${NC}"
+echo -e "${BLUE}╠════════════════════════════════════════════════════════════════╣${NC}"
+echo -e "${BLUE}║${NC}  ${GREEN}Participant:${NC}    PARTICIPANT_PLACEHOLDER                      ${BLUE}║${NC}"
+echo -e "${BLUE}║${NC}  ${GREEN}Node Name:${NC}      $HOSTNAME                                    ${BLUE}║${NC}"
+echo -e "${BLUE}║${NC}  ${GREEN}Role:${NC}           Master (Control Plane)                      ${BLUE}║${NC}"
+echo -e "${BLUE}║${NC}  ${GREEN}Private IP:${NC}     $PRIVATE_IP                                 ${BLUE}║${NC}"
+echo -e "${BLUE}║${NC}  ${GREEN}Public IP:${NC}      $PUBLIC_IP                                  ${BLUE}║${NC}"
+echo -e "${BLUE}║${NC}  ${GREEN}K8s Version:${NC}    $K8S_VERSION                                ${BLUE}║${NC}"
+echo -e "${BLUE}╠════════════════════════════════════════════════════════════════╣${NC}"
+echo -e "${BLUE}║${NC}  ${YELLOW}Useful Commands:${NC}                                            ${BLUE}║${NC}"
+echo -e "${BLUE}║${NC}    kubectl get nodes                                          ${BLUE}║${NC}"
+echo -e "${BLUE}║${NC}    kubectl get pods --all-namespaces                          ${BLUE}║${NC}"
+echo -e "${BLUE}║${NC}    /home/ubuntu/cluster-info.sh                               ${BLUE}║${NC}"
+echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+
+# Show cluster status
+if command -v kubectl &> /dev/null; then
+    echo -e "${CYAN}Cluster Nodes:${NC}"
+    kubectl get nodes 2>/dev/null | head -n 10 || echo "Cluster not ready yet"
+    echo ""
+fi
+MOTD_SCRIPT
+
+# Replace participant placeholder
+sed -i "s/PARTICIPANT_PLACEHOLDER/$PARTICIPANT_NAME/g" /etc/update-motd.d/10-node-info
+
+chmod +x /etc/update-motd.d/*
+
+# Disable default Ubuntu MOTD
+chmod -x /etc/update-motd.d/10-help-text 2>/dev/null || true
+chmod -x /etc/update-motd.d/50-motd-news 2>/dev/null || true
+chmod -x /etc/update-motd.d/95-hwe-eol 2>/dev/null || true
 
 echo "=== Kubernetes Master Node Setup Complete ==="
 echo "Run '/home/ubuntu/cluster-info.sh' to see cluster information"

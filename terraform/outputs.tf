@@ -7,10 +7,12 @@ output "clusters" {
   description = "Information about each participant's cluster"
   value = {
     for name, cluster in module.k8s_cluster : name => {
-      master_public_ip  = cluster.master_public_ip
-      master_private_ip = cluster.master_private_ip
-      worker_ips        = cluster.worker_private_ips
-      ssh_command       = "ssh -i ~/.ssh/id_ed25519 ubuntu@${cluster.master_public_ip}"
+      master_public_ip   = cluster.master_public_ip
+      master_private_ip  = cluster.master_private_ip
+      worker_private_ips = cluster.worker_private_ips
+      worker_public_ips  = cluster.worker_public_ips
+      worker_ips         = cluster.worker_private_ips  # Keep for backward compatibility
+      ssh_command        = "ssh -i ~/.ssh/id_ed25519 ubuntu@${cluster.master_public_ip}"
     }
   }
 }
