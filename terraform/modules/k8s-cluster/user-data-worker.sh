@@ -174,31 +174,31 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Get system info
-HOSTNAME=$(hostname)
-PRIVATE_IP=$(hostname -I | awk '{print $1}')
-PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "N/A")
+HOSTNAME=$$(hostname)
+PRIVATE_IP=$$(hostname -I | awk '{print $$1}')
+PUBLIC_IP=$$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "N/A")
 MASTER_IP="MASTER_IP_PLACEHOLDER"
 
-echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║${NC}  ${CYAN}Node Information${NC}                                             ${BLUE}║${NC}"
-echo -e "${BLUE}╠════════════════════════════════════════════════════════════════╣${NC}"
-echo -e "${BLUE}║${NC}  ${GREEN}Participant:${NC}    PARTICIPANT_PLACEHOLDER                      ${BLUE}║${NC}"
-echo -e "${BLUE}║${NC}  ${GREEN}Node Name:${NC}      $HOSTNAME                                    ${BLUE}║${NC}"
-echo -e "${BLUE}║${NC}  ${GREEN}Role:${NC}           Worker Node (Worker Index: WORKER_INDEX_PLACEHOLDER) ${BLUE}║${NC}"
-echo -e "${BLUE}║${NC}  ${GREEN}Private IP:${NC}     $PRIVATE_IP                                 ${BLUE}║${NC}"
-echo -e "${BLUE}║${NC}  ${GREEN}Public IP:${NC}      $PUBLIC_IP                                  ${BLUE}║${NC}"
-echo -e "${BLUE}║${NC}  ${GREEN}Master IP:${NC}      $MASTER_IP                                  ${BLUE}║${NC}"
-echo -e "${BLUE}╠════════════════════════════════════════════════════════════════╣${NC}"
-echo -e "${BLUE}║${NC}  ${YELLOW}Useful Commands:${NC}                                            ${BLUE}║${NC}"
-echo -e "${BLUE}║${NC}    kubectl get nodes                                          ${BLUE}║${NC}"
-echo -e "${BLUE}║${NC}    kubectl get pods --all-namespaces                          ${BLUE}║${NC}"
-echo -e "${BLUE}║${NC}    ssh ubuntu@\$MASTER_IP  # Connect to master               ${BLUE}║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
+echo -e "$${BLUE}╔════════════════════════════════════════════════════════════════╗$${NC}"
+echo -e "$${BLUE}║$${NC}  $${CYAN}Node Information$${NC}                                             $${BLUE}║$${NC}"
+echo -e "$${BLUE}╠════════════════════════════════════════════════════════════════╣$${NC}"
+echo -e "$${BLUE}║$${NC}  $${GREEN}Participant:$${NC}    PARTICIPANT_PLACEHOLDER                      $${BLUE}║$${NC}"
+echo -e "$${BLUE}║$${NC}  $${GREEN}Node Name:$${NC}      $$HOSTNAME                                    $${BLUE}║$${NC}"
+echo -e "$${BLUE}║$${NC}  $${GREEN}Role:$${NC}           Worker Node (Worker Index: WORKER_INDEX_PLACEHOLDER) $${BLUE}║$${NC}"
+echo -e "$${BLUE}║$${NC}  $${GREEN}Private IP:$${NC}     $$PRIVATE_IP                                 $${BLUE}║$${NC}"
+echo -e "$${BLUE}║$${NC}  $${GREEN}Public IP:$${NC}      $$PUBLIC_IP                                  $${BLUE}║$${NC}"
+echo -e "$${BLUE}║$${NC}  $${GREEN}Master IP:$${NC}      $$MASTER_IP                                  $${BLUE}║$${NC}"
+echo -e "$${BLUE}╠════════════════════════════════════════════════════════════════╣$${NC}"
+echo -e "$${BLUE}║$${NC}  $${YELLOW}Useful Commands:$${NC}                                            $${BLUE}║$${NC}"
+echo -e "$${BLUE}║$${NC}    kubectl get nodes                                          $${BLUE}║$${NC}"
+echo -e "$${BLUE}║$${NC}    kubectl get pods --all-namespaces                          $${BLUE}║$${NC}"
+echo -e "$${BLUE}║$${NC}    ssh ubuntu@\$$MASTER_IP  # Connect to master               $${BLUE}║$${NC}"
+echo -e "$${BLUE}╚════════════════════════════════════════════════════════════════╝$${NC}"
 echo ""
 
 # Show cluster status if kubectl is configured
 if [ -f /home/ubuntu/.kube/config ]; then
-    echo -e "${CYAN}Cluster Nodes:${NC}"
+    echo -e "$${CYAN}Cluster Nodes:$${NC}"
     kubectl get nodes 2>/dev/null | head -n 10 || echo "kubectl not configured yet - run from master"
     echo ""
 fi
