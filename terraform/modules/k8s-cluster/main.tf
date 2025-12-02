@@ -158,6 +158,8 @@ resource "aws_instance" "master" {
     cluster_name             = "${var.project_name}-${var.participant_name}"
     pod_network_cidr         = "10.${100 + local.participant_cidr_offset}.0.0/16"
     cluster_internal_ssh_pub = tls_private_key.cluster_internal.public_key_openssh
+    node_name                = "master"
+    participant_name         = var.participant_name
   })
 
   tags = merge(
@@ -191,6 +193,9 @@ resource "aws_instance" "worker" {
     kubernetes_version        = var.kubernetes_version
     master_private_ip         = aws_instance.master.private_ip
     cluster_internal_ssh_key  = tls_private_key.cluster_internal.private_key_pem
+    node_name                 = "worker-${count.index + 1}"
+    worker_index              = count.index + 1
+    participant_name          = var.participant_name
   })
 
   tags = merge(

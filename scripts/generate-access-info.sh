@@ -52,16 +52,36 @@ Participant: \(.key)
 =================================================
 Master Node IP: \(.value.master_public_ip)
 SSH Command: ssh ubuntu@\(.value.master_public_ip)
-Worker Nodes: \(.value.worker_ips | length)
+
+Worker Nodes: \(.value.worker_public_ips | length)
+" +
+(if (.value.worker_public_ips | length) > 0 then
+  (.value.worker_public_ips | to_entries | map(
+    "  Worker-\(.key + 1): \(.value)
+    SSH: ssh ubuntu@\(.value)"
+  ) | join("\n"))
+else
+  "  No worker nodes"
+end) + "
 
 Connection Instructions:
 1. Connect to your master node:
    ssh ubuntu@\(.value.master_public_ip)
 
-2. Check cluster status:
+2. Connect to worker nodes (from your local machine):
+" +
+(if (.value.worker_public_ips | length) > 0 then
+  (.value.worker_public_ips | to_entries | map(
+    "   ssh ubuntu@\(.value)  # worker-\(.key + 1)"
+  ) | join("\n"))
+else
+  "   No worker nodes available"
+end) + "
+
+3. Check cluster status:
    kubectl get nodes
 
-3. View cluster info:
+4. View cluster info:
    /home/ubuntu/cluster-info.sh
 
 "
@@ -82,7 +102,15 @@ to_entries[] |
 "Participant: \(.key)
 Master IP: \(.value.master_public_ip)
 SSH: ssh ubuntu@\(.value.master_public_ip)
-Workers: \(.value.worker_ips | length) nodes
+Workers: \(.value.worker_public_ips | length) nodes
+" +
+(if (.value.worker_public_ips | length) > 0 then
+  (.value.worker_public_ips | to_entries | map(
+    "  Worker-\(.key + 1): \(.value)"
+  ) | join("\n"))
+else
+  ""
+end) + "
 ---"
 '
 
@@ -111,7 +139,8 @@ echo "$CLUSTERS_JSON" | jq -r 'to_entries[] | @base64' | while read -r entry; do
 
     PARTICIPANT=$(_jq '.key')
     MASTER_IP=$(_jq '.value.master_public_ip')
-    WORKER_COUNT=$(_jq '.value.worker_ips | length')
+    WORKER_COUNT=$(_jq '.value.worker_public_ips | length')
+    WORKER_IPS=$(_jq '.value.worker_public_ips | @json')
 
     # Create individual access file
     cat > "$ACCESS_DIR/${PARTICIPANT}-access.txt" << ENDOFFILE
@@ -123,9 +152,17 @@ Participant: ${PARTICIPANT}
 Session: ${SESSION_NAME:-Default}
 
 Master Node: ${MASTER_IP}
+  SSH: ssh ubuntu@${MASTER_IP}
 
-SSH Access:
-  ssh ubuntu@${MASTER_IP}
+Worker Nodes: ${WORKER_COUNT}
+ENDOFFILE
+
+    # Add worker IPs
+    if [ "$WORKER_COUNT" -gt 0 ]; then
+        echo "$WORKER_IPS" | jq -r 'to_entries[] | "  Worker-\(.key + 1): \(.value)\n    SSH: ssh ubuntu@\(.value)"' >> "$ACCESS_DIR/${PARTICIPANT}-access.txt"
+    fi
+
+    cat >> "$ACCESS_DIR/${PARTICIPANT}-access.txt" << ENDOFFILE
 
 Getting Started:
 1. Connect to your master node:
@@ -171,7 +208,7 @@ echo -e "${YELLOW}You can send these files to individual participants via email/
 
 # Generate a CSV for easy import into spreadsheets
 CSV_FILE="$ACCESS_DIR/participants.csv"
-echo "Participant,Master IP,SSH Command,Worker Count,Session" > "$CSV_FILE"
+echo "Participant,Master IP,Worker IPs,SSH Command,Worker Count,Session" > "$CSV_FILE"
 
 echo "$CLUSTERS_JSON" | jq -r 'to_entries[] | @base64' | while read -r entry; do
     _jq() {
@@ -180,10 +217,11 @@ echo "$CLUSTERS_JSON" | jq -r 'to_entries[] | @base64' | while read -r entry; do
 
     PARTICIPANT=$(_jq '.key')
     MASTER_IP=$(_jq '.value.master_public_ip')
-    WORKER_COUNT=$(_jq '.value.worker_ips | length')
+    WORKER_COUNT=$(_jq '.value.worker_public_ips | length')
+    WORKER_IPS_CSV=$(_jq '.value.worker_public_ips | join("; ")')
     SSH_CMD="ssh ubuntu@${MASTER_IP}"
 
-    echo "${PARTICIPANT},${MASTER_IP},${SSH_CMD},${WORKER_COUNT},${SESSION_NAME:-Default}" >> "$CSV_FILE"
+    echo "${PARTICIPANT},${MASTER_IP},\"${WORKER_IPS_CSV}\",${SSH_CMD},${WORKER_COUNT},${SESSION_NAME:-Default}" >> "$CSV_FILE"
 done
 
 echo -e "${GREEN}CSV file created: $CSV_FILE${NC}\n"
