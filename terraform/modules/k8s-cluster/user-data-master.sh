@@ -169,31 +169,31 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Get system info
-HOSTNAME=$(hostname)
-PRIVATE_IP=$(hostname -I | awk '{print $1}')
-PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "N/A")
-K8S_VERSION=$(kubectl version --short 2>/dev/null | grep Server | awk '{print $3}' || echo "Not available yet")
+HOSTNAME=$$(hostname)
+PRIVATE_IP=$$(hostname -I | awk '{print $$1}')
+PUBLIC_IP=$$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "N/A")
+K8S_VERSION=$$(kubectl version --short 2>/dev/null | grep Server | awk '{print $$3}' || echo "Not available yet")
 
-echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║${NC}  ${CYAN}Node Information${NC}                                             ${BLUE}║${NC}"
-echo -e "${BLUE}╠════════════════════════════════════════════════════════════════╣${NC}"
-echo -e "${BLUE}║${NC}  ${GREEN}Participant:${NC}    PARTICIPANT_PLACEHOLDER                      ${BLUE}║${NC}"
-echo -e "${BLUE}║${NC}  ${GREEN}Node Name:${NC}      $HOSTNAME                                    ${BLUE}║${NC}"
-echo -e "${BLUE}║${NC}  ${GREEN}Role:${NC}           Master (Control Plane)                      ${BLUE}║${NC}"
-echo -e "${BLUE}║${NC}  ${GREEN}Private IP:${NC}     $PRIVATE_IP                                 ${BLUE}║${NC}"
-echo -e "${BLUE}║${NC}  ${GREEN}Public IP:${NC}      $PUBLIC_IP                                  ${BLUE}║${NC}"
-echo -e "${BLUE}║${NC}  ${GREEN}K8s Version:${NC}    $K8S_VERSION                                ${BLUE}║${NC}"
-echo -e "${BLUE}╠════════════════════════════════════════════════════════════════╣${NC}"
-echo -e "${BLUE}║${NC}  ${YELLOW}Useful Commands:${NC}                                            ${BLUE}║${NC}"
-echo -e "${BLUE}║${NC}    kubectl get nodes                                          ${BLUE}║${NC}"
-echo -e "${BLUE}║${NC}    kubectl get pods --all-namespaces                          ${BLUE}║${NC}"
-echo -e "${BLUE}║${NC}    /home/ubuntu/cluster-info.sh                               ${BLUE}║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
+echo -e "$${BLUE}╔════════════════════════════════════════════════════════════════╗$${NC}"
+echo -e "$${BLUE}║$${NC}  $${CYAN}Node Information$${NC}                                             $${BLUE}║$${NC}"
+echo -e "$${BLUE}╠════════════════════════════════════════════════════════════════╣$${NC}"
+echo -e "$${BLUE}║$${NC}  $${GREEN}Participant:$${NC}    PARTICIPANT_PLACEHOLDER                      $${BLUE}║$${NC}"
+echo -e "$${BLUE}║$${NC}  $${GREEN}Node Name:$${NC}      $$HOSTNAME                                    $${BLUE}║$${NC}"
+echo -e "$${BLUE}║$${NC}  $${GREEN}Role:$${NC}           Master (Control Plane)                      $${BLUE}║$${NC}"
+echo -e "$${BLUE}║$${NC}  $${GREEN}Private IP:$${NC}     $$PRIVATE_IP                                 $${BLUE}║$${NC}"
+echo -e "$${BLUE}║$${NC}  $${GREEN}Public IP:$${NC}      $$PUBLIC_IP                                  $${BLUE}║$${NC}"
+echo -e "$${BLUE}║$${NC}  $${GREEN}K8s Version:$${NC}    $$K8S_VERSION                                $${BLUE}║$${NC}"
+echo -e "$${BLUE}╠════════════════════════════════════════════════════════════════╣$${NC}"
+echo -e "$${BLUE}║$${NC}  $${YELLOW}Useful Commands:$${NC}                                            $${BLUE}║$${NC}"
+echo -e "$${BLUE}║$${NC}    kubectl get nodes                                          $${BLUE}║$${NC}"
+echo -e "$${BLUE}║$${NC}    kubectl get pods --all-namespaces                          $${BLUE}║$${NC}"
+echo -e "$${BLUE}║$${NC}    /home/ubuntu/cluster-info.sh                               $${BLUE}║$${NC}"
+echo -e "$${BLUE}╚════════════════════════════════════════════════════════════════╝$${NC}"
 echo ""
 
 # Show cluster status
 if command -v kubectl &> /dev/null; then
-    echo -e "${CYAN}Cluster Nodes:${NC}"
+    echo -e "$${CYAN}Cluster Nodes:$${NC}"
     kubectl get nodes 2>/dev/null | head -n 10 || echo "Cluster not ready yet"
     echo ""
 fi
