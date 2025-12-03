@@ -23,16 +23,20 @@ Ce document présente différentes solutions simples et pratiques pour distribue
 
 #### Étape 1 : Générer les fichiers
 ```bash
-./scripts/generate-access-info.sh
+# Générer les fichiers d'accès pour une session
+./scripts/generate-access-info.sh <session-name>
+
+# Exemple pour session-1
+./scripts/generate-access-info.sh session-1
 ```
 
-Cela crée des fichiers individuels dans `participant-access/`:
+Cela crée des fichiers individuels dans `participant-access/<session-name>/`:
 ```
-participant-access/
+participant-access/session-1/
 ├── jean.martin-access.txt
 ├── marie.dubois-access.txt
 ├── pierre.bernard-access.txt
-└── participants.csv
+└── participants-session-1.csv
 ```
 
 #### Étape 2 : Script d'envoi automatique
@@ -464,12 +468,14 @@ sudo systemctl reload nginx
 ### Mise en œuvre
 
 ```bash
-# Générer le CSV
-./scripts/generate-access-info.sh
+# Générer le CSV pour une session
+./scripts/generate-access-info.sh <session-name>
 
-# Le CSV est dans participant-access/participants.csv
+# Le CSV est dans participant-access/<session-name>/participants-<session-name>.csv
+# Exemple pour session-1 : participant-access/session-1/participants-session-1.csv
+
 # 1. Ouvrir Google Sheets
-# 2. File > Import > Upload > participants.csv
+# 2. File > Import > Upload > participants-session-1.csv
 # 3. Partager avec les participants (view only)
 ```
 
@@ -538,7 +544,7 @@ SESSION="session-nov-2025"
 SESSION_DATE="12-13 Novembre 2025"
 
 echo "🚀 Generating access information..."
-./scripts/generate-access-info.sh
+./scripts/generate-access-info.sh "$SESSION"
 
 echo "📧 Sending individual emails..."
 ./scripts/send-access-emails.sh

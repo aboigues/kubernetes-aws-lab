@@ -271,11 +271,15 @@ allowed_ssh_cidrs = ["0.0.0.0/0"]  # ou IP spécifique
 allowed_api_cidrs = ["0.0.0.0/0"]
 EOF
 
-# 4. Déployer
+# 4. Déployer (méthode traditionnelle)
 cd terraform && terraform apply
 
+# OU utiliser la nouvelle approche avec sessions (recommandé)
+./scripts/manage-session.sh init session-nov-2025
+./scripts/manage-session.sh apply session-nov-2025
+
 # 5. Distribuer les accès
-cd .. && ./scripts/generate-access-info.sh
+./scripts/generate-access-info.sh session-nov-2025
 ```
 
 ### Documentation détaillée
