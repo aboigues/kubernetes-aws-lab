@@ -99,7 +99,13 @@ kubernetes-aws-lab/
 ├── README.md                          # Ce fichier
 ├── docs/                              # Documentation
 │   ├── SESSION-MANAGEMENT.md          # Guide gestion des sessions
+│   ├── PARALLEL-SESSIONS.md           # ⭐ Guide sessions parallèles
 │   └── PARTICIPANT-ACCESS-SOLUTIONS.md # Solutions de distribution des accès
+├── sessions/                          # ⭐ Configurations par session
+│   ├── README.md                      # Guide des configurations
+│   ├── session-1.tfvars               # Config session 1 (0 workers)
+│   ├── session-2.tfvars               # Config session 2 (2 workers)
+│   └── session-3.tfvars               # Config session 3 (5 workers)
 ├── participants/                      # Clés SSH publiques des participants
 │   ├── README.md                      # Instructions pour les participants
 │   ├── example.user.pub.example       # Exemple de clé (à renommer en .pub)
@@ -109,11 +115,13 @@ kubernetes-aws-lab/
 │       └── prenom.nom.pub             # Clés des participants
 ├── scripts/
 │   ├── validate-ssh-keys.sh           # Script de validation des clés
-│   └── generate-access-info.sh        # Génération des infos d'accès
+│   ├── generate-access-info.sh        # Génération des infos d'accès
+│   └── manage-session.sh              # ⭐ Gestion des sessions parallèles
 └── terraform/                         # Infrastructure Terraform
     ├── main.tf                        # Configuration principale
     ├── variables.tf                   # Variables Terraform
     ├── outputs.tf                     # Outputs Terraform
+    ├── backend.tf                     # ⭐ Configuration backend S3/local
     ├── terraform.tfvars.example       # Exemple de configuration
     └── modules/
         ├── vpc/                       # Module VPC partagé
@@ -245,6 +253,7 @@ Ce projet supporte maintenant la gestion de sessions de formation avec :
 - **💰 Suivi des coûts AWS** : Tags automatiques par session pour AWS Cost Explorer
 - **📨 Distribution automatique** : Script pour générer et distribuer les accès aux participants
 - **🔒 Sécurité configurable** : VPC et Security Groups paramétrables
+- **🚀 Sessions parallèles** : ⭐ **NOUVEAU** : Déployez plusieurs sessions simultanément avec des configurations différentes
 
 ### Démarrage rapide pour une session
 
@@ -272,7 +281,35 @@ cd .. && ./scripts/generate-access-info.sh
 ### Documentation détaillée
 
 - **[Guide de gestion des sessions](docs/SESSION-MANAGEMENT.md)** - Configuration et organisation des sessions
+- **[Sessions parallèles](docs/PARALLEL-SESSIONS.md)** - ⭐ **NOUVEAU** : Déployer plusieurs sessions en parallèle avec des configurations différentes
 - **[Solutions de communication](docs/PARTICIPANT-ACCESS-SOLUTIONS.md)** - Comment distribuer les accès aux participants
+
+### Sessions parallèles (⭐ NOUVEAU)
+
+Vous pouvez maintenant déployer plusieurs sessions en parallèle avec des configurations différentes :
+
+```bash
+# Lister les sessions disponibles
+./scripts/manage-session.sh list
+
+# Déployer plusieurs sessions en parallèle
+# Terminal 1
+./scripts/manage-session.sh apply session-1  # 0 workers
+
+# Terminal 2
+./scripts/manage-session.sh apply session-2  # 2 workers
+
+# Terminal 3
+./scripts/manage-session.sh apply session-3  # 5 workers
+```
+
+Chaque session peut avoir :
+- ✅ Nombre différent de workers (0, 2, 5, etc.)
+- ✅ Types d'instances différents (t3.small, t3.medium, t3.large)
+- ✅ Participants différents
+- ✅ Suivi des coûts indépendant
+
+Voir la **[documentation complète des sessions parallèles](docs/PARALLEL-SESSIONS.md)** pour plus de détails.
 
 ### Suivi des coûts AWS
 
