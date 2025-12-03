@@ -26,8 +26,8 @@ Ce système permet de déployer plusieurs configurations Kubernetes en parallèl
 # Créer le répertoire participants pour session-1
 mkdir -p participants/session-1
 
-# Ajouter votre clé SSH (remplacer par votre nom)
-cat ~/.ssh/id_rsa.pub > participants/session-1/alice.smith.pub
+# Ajouter votre clé SSH ed25519 (remplacer par votre nom)
+cat ~/.ssh/id_ed25519.pub > participants/session-1/alice.smith.pub
 
 # Vérifier la configuration
 cat sessions/session-1.tfvars
@@ -111,7 +111,7 @@ vi sessions/ma-session.tfvars
 # Créer le répertoire participants
 mkdir -p participants/ma-session
 
-# Ajouter les clés SSH
+# Ajouter les clés SSH ed25519
 cp /path/to/keys/*.pub participants/ma-session/
 
 # Déployer
@@ -212,7 +212,7 @@ vi sessions/formation-dec-2025.tfvars
 # 3. Créer le répertoire participants
 mkdir -p participants/formation-dec-2025
 
-# 4. Demander aux participants d'ajouter leurs clés SSH
+# 4. Demander aux participants d'ajouter leurs clés SSH ed25519
 # (ou les ajouter vous-même)
 ```
 
@@ -277,8 +277,8 @@ Pour 10 participants sur session-2:
 # Vérifier le répertoire
 ls -la participants/session-1/
 
-# Ajouter au moins une clé
-cat ~/.ssh/id_rsa.pub > participants/session-1/test.user.pub
+# Ajouter au moins une clé ed25519
+cat ~/.ssh/id_ed25519.pub > participants/session-1/test.user.pub
 ```
 
 ### "Workspace not found"

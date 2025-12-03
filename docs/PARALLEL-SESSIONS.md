@@ -112,8 +112,8 @@ Available session configurations:
 # Create participant directory
 mkdir -p participants/session-1
 
-# Add SSH keys
-cp ~/.ssh/id_rsa.pub participants/session-1/alice.pub
+# Add SSH keys (ed25519)
+cp ~/.ssh/id_ed25519.pub participants/session-1/alice.pub
 
 # Review configuration
 cat sessions/session-1.tfvars
@@ -166,8 +166,8 @@ vi sessions/my-training.tfvars
 # Create participants directory
 mkdir -p participants/my-training
 
-# Add SSH keys
-cp ~/.ssh/id_rsa.pub participants/my-training/trainer.pub
+# Add SSH keys (ed25519)
+cp ~/.ssh/id_ed25519.pub participants/my-training/trainer.pub
 ```
 
 #### Manual Creation
@@ -507,7 +507,7 @@ Error: No participant SSH keys found in: participants/my-session
 **Solution**:
 ```bash
 mkdir -p participants/my-session
-cp ~/.ssh/id_rsa.pub participants/my-session/yourname.pub
+cp ~/.ssh/id_ed25519.pub participants/my-session/yourname.pub
 ```
 
 #### Issue: "Workspace not found"
@@ -678,7 +678,7 @@ done < participants.txt
 # Edit to set worker_count = 0
 
 mkdir -p participants/demo
-cp ~/.ssh/id_rsa.pub participants/demo/presenter.pub
+cp ~/.ssh/id_ed25519.pub participants/demo/presenter.pub
 
 ./scripts/manage-session.sh init demo
 ./scripts/manage-session.sh apply demo

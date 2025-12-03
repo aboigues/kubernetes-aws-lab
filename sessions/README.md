@@ -52,7 +52,7 @@ vi sessions/my-session.tfvars
 
 # Create participant directory and add SSH keys
 mkdir -p participants/my-session
-cp ~/.ssh/id_rsa.pub participants/my-session/john.doe.pub
+cp ~/.ssh/id_ed25519.pub participants/my-session/john.doe.pub
 ```
 
 ### Option 2: Manual Creation
@@ -215,7 +215,7 @@ Error: No participant SSH keys found in: participants/my-session
 **Solution**: Create the directory and add at least one `.pub` file:
 ```bash
 mkdir -p participants/my-session
-cp ~/.ssh/id_rsa.pub participants/my-session/yourname.pub
+cp ~/.ssh/id_ed25519.pub participants/my-session/yourname.pub
 ```
 
 ### Workspace not found

@@ -9,8 +9,8 @@ Configuration large avec 1 master et 5 workers pour simulation production.
 
 ## Participants
 
-Ajoutez vos clés SSH publiques dans ce répertoire :
+Ajoutez vos clés SSH ed25519 publiques dans ce répertoire :
 
 ```bash
-cat ~/.ssh/id_rsa.pub > participants/session-3/prenom.nom.pub
+cat ~/.ssh/id_ed25519.pub > participants/session-3/prenom.nom.pub
 ```

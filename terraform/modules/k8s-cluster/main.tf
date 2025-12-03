@@ -1,7 +1,6 @@
 # Generate internal SSH key for cluster communication
 resource "tls_private_key" "cluster_internal" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
+  algorithm = "ED25519"
 }
 
 # Get latest Ubuntu 22.04 LTS AMI
