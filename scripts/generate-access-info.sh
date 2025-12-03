@@ -1,40 +1,100 @@
 #!/bin/bash
 
-# Script to generate participant access information
-# This script should be run from the terraform/ directory after a successful terraform apply
+# Script to generate participant access information for multi-session deployments
+# This script works with Terraform workspaces to support parallel sessions
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TERRAFORM_DIR="$SCRIPT_DIR/../terraform"
+PROJECT_ROOT="$SCRIPT_DIR/.."
+TERRAFORM_DIR="$PROJECT_ROOT/terraform"
+SESSIONS_DIR="$PROJECT_ROOT/sessions"
 
 # Colors for output
+RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}=== Kubernetes AWS Lab - Participant Access Information ===${NC}\n"
+# Show usage
+usage() {
+    cat << EOF
+${GREEN}Kubernetes AWS Lab - Generate Access Information${NC}
 
-# Check if terraform directory exists and has state
+${BLUE}Usage:${NC}
+  $0 <session-name>
+
+${BLUE}Description:${NC}
+  Generates participant access information for a deployed session.
+  Creates individual access files and a CSV for easy distribution.
+
+${BLUE}Examples:${NC}
+  # Generate access info for session-1
+  $0 session-1
+
+  # Generate for a custom session
+  $0 my-training
+
+${BLUE}Output:${NC}
+  - Console output with all participant details
+  - Individual access files in: participant-access/<session>/
+  - CSV file for spreadsheet import
+  - Email/Slack message template
+
+${BLUE}Requirements:${NC}
+  - Session must be deployed (terraform apply completed)
+  - Terraform workspace for the session must exist
+  - jq must be installed for JSON parsing
+
+EOF
+    exit 0
+}
+
+# Check for help flag
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    usage
+fi
+
+# Get session name from argument
+SESSION_NAME="$1"
+
+if [ -z "$SESSION_NAME" ]; then
+    echo -e "${RED}Error: Session name required${NC}\n"
+    usage
+fi
+
+# Check if session config exists
+CONFIG_FILE="$SESSIONS_DIR/${SESSION_NAME}.tfvars"
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo -e "${RED}Error: Session config not found: $CONFIG_FILE${NC}"
+    echo -e "${YELLOW}Available sessions:${NC}"
+    ls -1 "$SESSIONS_DIR"/*.tfvars 2>/dev/null | xargs -n1 basename | sed 's/.tfvars$//' | sed 's/^/  - /'
+    exit 1
+fi
+
+echo -e "${BLUE}=== Kubernetes AWS Lab - Participant Access Information ===${NC}"
+echo -e "${YELLOW}Session: ${SESSION_NAME}${NC}\n"
+
+# Check if terraform directory exists
 if [ ! -d "$TERRAFORM_DIR" ]; then
-    echo "Error: Terraform directory not found at $TERRAFORM_DIR"
+    echo -e "${RED}Error: Terraform directory not found at $TERRAFORM_DIR${NC}"
     exit 1
 fi
 
 cd "$TERRAFORM_DIR"
 
-if [ ! -f "terraform.tfstate" ]; then
-    echo "Error: terraform.tfstate not found. Please run 'terraform apply' first."
+# Check if workspace exists
+if ! terraform workspace list | grep -q "^\s*${SESSION_NAME}$\|^\*\s*${SESSION_NAME}$"; then
+    echo -e "${RED}Error: Terraform workspace '$SESSION_NAME' not found${NC}"
+    echo -e "${YELLOW}Initialize the session first with:${NC}"
+    echo -e "  ./scripts/manage-session.sh init $SESSION_NAME"
     exit 1
 fi
 
-# Get session name if set
-SESSION_NAME=$(terraform output -json 2>/dev/null | jq -r '.session_info.value.session_name // empty')
-
-if [ -n "$SESSION_NAME" ]; then
-    echo -e "${YELLOW}Session: ${SESSION_NAME}${NC}\n"
-fi
+# Switch to the session workspace
+echo -e "${BLUE}Switching to workspace: ${SESSION_NAME}${NC}\n"
+terraform workspace select "$SESSION_NAME" > /dev/null
 
 # Get clusters output
 CLUSTERS_JSON=$(terraform output -json clusters 2>/dev/null)
@@ -129,7 +189,7 @@ EOF
 echo -e "\n${GREEN}=== Individual Access Files ===${NC}\n"
 
 # Create individual access files for each participant
-ACCESS_DIR="$SCRIPT_DIR/../participant-access"
+ACCESS_DIR="$PROJECT_ROOT/participant-access/${SESSION_NAME}"
 mkdir -p "$ACCESS_DIR"
 
 echo "$CLUSTERS_JSON" | jq -r 'to_entries[] | @base64' | while read -r entry; do
@@ -207,7 +267,7 @@ echo -e "\n${YELLOW}Access files have been created in: $ACCESS_DIR${NC}"
 echo -e "${YELLOW}You can send these files to individual participants via email/Slack.${NC}\n"
 
 # Generate a CSV for easy import into spreadsheets
-CSV_FILE="$ACCESS_DIR/participants.csv"
+CSV_FILE="$ACCESS_DIR/participants-${SESSION_NAME}.csv"
 echo "Participant,Master IP,Worker IPs,SSH Command,Worker Count,Session" > "$CSV_FILE"
 
 echo "$CLUSTERS_JSON" | jq -r 'to_entries[] | @base64' | while read -r entry; do
@@ -225,3 +285,10 @@ echo "$CLUSTERS_JSON" | jq -r 'to_entries[] | @base64' | while read -r entry; do
 done
 
 echo -e "${GREEN}CSV file created: $CSV_FILE${NC}\n"
+
+echo -e "${BLUE}=== Summary ===${NC}"
+echo -e "Session: ${YELLOW}${SESSION_NAME}${NC}"
+echo -e "Access files directory: ${GREEN}${ACCESS_DIR}${NC}"
+echo -e "CSV file: ${GREEN}${CSV_FILE}${NC}"
+echo -e "\n${BLUE}Tip:${NC} Generate access info for other sessions with:"
+echo -e "  ${YELLOW}./scripts/generate-access-info.sh <session-name>${NC}\n"

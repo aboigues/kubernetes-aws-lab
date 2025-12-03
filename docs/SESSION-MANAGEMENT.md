@@ -127,16 +127,19 @@ Terraform va :
 ### Option 1 : Script automatique (Recommandé)
 
 ```bash
-# Générer tous les fichiers d'accès
-./scripts/generate-access-info.sh
+# Générer tous les fichiers d'accès pour une session
+./scripts/generate-access-info.sh <session-name>
+
+# Exemple pour session-1
+./scripts/generate-access-info.sh session-1
 ```
 
 Ce script crée :
-- **Fichiers individuels** dans `participant-access/` :
+- **Fichiers individuels** dans `participant-access/<session-name>/` :
   - `jean.martin-access.txt`
   - `marie.dubois-access.txt`
   - etc.
-- **Fichier CSV** : `participant-access/participants.csv`
+- **Fichier CSV** : `participant-access/<session-name>/participants-<session-name>.csv`
 - **Affichage console** : Template email/Slack
 
 ### Option 2 : Terraform Output
@@ -383,17 +386,15 @@ session_name = "session-nov-2025"
 aws_region = "eu-west-1"
 EOF
 
-# 4. Déployer
-cd terraform
-terraform init
-terraform apply
+# 4. Déployer (nouvelle approche avec manage-session.sh)
+./scripts/manage-session.sh init session-nov-2025
+./scripts/manage-session.sh apply session-nov-2025
 
 # 5. Générer et distribuer les accès
-cd ..
-./scripts/generate-access-info.sh
+./scripts/generate-access-info.sh session-nov-2025
 
 # 6. Envoyer les fichiers aux participants
-for file in participant-access/*-access.txt; do
+for file in participant-access/session-nov-2025/*-access.txt; do
   echo "Email $file to participant"
   # Ou utiliser un script d'envoi automatique
 done

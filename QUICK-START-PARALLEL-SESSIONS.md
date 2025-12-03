@@ -227,7 +227,7 @@ mkdir -p participants/formation-dec-2025
 ./scripts/manage-session.sh apply formation-dec-2025
 
 # 3. Distribuer les infos de connexion
-./scripts/generate-access-info.sh
+./scripts/generate-access-info.sh formation-dec-2025
 ```
 
 ### Jour J (soir)
