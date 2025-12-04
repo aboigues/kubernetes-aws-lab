@@ -116,7 +116,14 @@ kubernetes-aws-lab/
 ├── scripts/
 │   ├── validate-ssh-keys.sh           # Script de validation des clés
 │   ├── generate-access-info.sh        # Génération des infos d'accès
-│   └── manage-session.sh              # ⭐ Gestion des sessions parallèles
+│   ├── start-dashboard.sh             # ⭐ NOUVEAU: Lancement du dashboard web
+│   ├── manage-session.sh              # ⭐ Gestion des sessions parallèles
+│   └── web-dashboard/                 # ⭐ NOUVEAU: Dashboard web temps réel
+│       ├── app.py                     # Serveur Flask
+│       ├── requirements.txt           # Dépendances Python
+│       ├── README.md                  # Documentation du dashboard
+│       └── templates/
+│           └── dashboard.html         # Interface web
 └── terraform/                         # Infrastructure Terraform
     ├── main.tf                        # Configuration principale
     ├── variables.tf                   # Variables Terraform
@@ -188,6 +195,29 @@ terraform destroy
 ```
 
 ## Utilisation
+
+### 📊 Dashboard Web (⭐ NOUVEAU)
+
+Visualisez les informations d'accès de tous les participants en temps réel dans un tableau dynamique :
+
+```bash
+# Démarrer le dashboard web
+./scripts/start-dashboard.sh
+
+# Ou sur un port personnalisé
+./scripts/start-dashboard.sh --port 3000
+```
+
+Ouvrez votre navigateur à : **http://localhost:8080**
+
+**Fonctionnalités :**
+- ✅ Affichage en temps réel des informations de connexion
+- ✅ Rafraîchissement automatique toutes les 10 secondes
+- ✅ Copie des commandes SSH en un clic
+- ✅ Design responsive (mobile et desktop)
+- ✅ Support multi-sessions
+
+Voir [scripts/web-dashboard/README.md](scripts/web-dashboard/README.md) pour plus de détails.
 
 ### Commandes utiles sur le master node
 
@@ -278,8 +308,12 @@ cd terraform && terraform apply
 ./scripts/manage-session.sh init session-nov-2025
 ./scripts/manage-session.sh apply session-nov-2025
 
-# 5. Distribuer les accès
+# 5a. Distribuer les accès (méthode traditionnelle)
 ./scripts/generate-access-info.sh session-nov-2025
+
+# 5b. OU utiliser le dashboard web (⭐ NOUVEAU)
+./scripts/start-dashboard.sh
+# Ouvrir http://localhost:8080 dans votre navigateur
 ```
 
 ### Documentation détaillée
