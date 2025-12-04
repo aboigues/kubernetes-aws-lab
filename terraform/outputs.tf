@@ -39,3 +39,23 @@ output "session_info" {
     aws_cost_explorer_filter = var.session_name != "" ? "Tag: Session = ${var.session_name}" : "Tag: Project = ${var.project_name}"
   }
 }
+
+output "instance_type_master" {
+  description = "EC2 instance type used for master nodes"
+  value       = var.instance_type_master
+}
+
+output "instance_type_worker" {
+  description = "EC2 instance type used for worker nodes"
+  value       = var.instance_type_worker
+}
+
+output "worker_count" {
+  description = "Number of worker nodes per cluster"
+  value       = var.worker_count
+}
+
+output "availability_zones" {
+  description = "Availability zones in use"
+  value       = var.availability_zones
+}

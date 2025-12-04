@@ -390,8 +390,12 @@
                 <span class="value" id="last-update">-</span>
             </div>
             <div class="info-item">
-                <span class="label">Coût estimé:</span>
-                <span class="value" id="cost-estimate" style="color: #f59e0b;">$0.00</span>
+                <span class="label">Coût horaire:</span>
+                <span class="value" id="cost-hourly" style="color: #f59e0b;" title="Coût AWS par heure">$0.00/h</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Coût estimé session:</span>
+                <span class="value" id="cost-estimate" style="color: #f59e0b;" title="Coût total depuis le début">$0.00</span>
             </div>
             <div class="controls">
                 <button class="refresh-btn" onclick="refreshData()">🔄 Actualiser</button>
@@ -437,11 +441,8 @@
         let isAutoRefreshEnabled = true;
         const REFRESH_INTERVAL = 10000; // 10 seconds
         let sessionStartTime = null;
-        let totalInstances = 0;
+        let hourlyCost = 0;
         let costUpdateInterval = null;
-
-        // AWS EC2 pricing (approximate for t3.medium in us-east-1)
-        const HOURLY_COST_PER_INSTANCE = 0.0416; // $0.0416 per hour per t3.medium
 
         function formatTime(isoString) {
             if (!isoString) return '-';
@@ -450,14 +451,14 @@
         }
 
         function updateCostEstimate() {
-            if (!sessionStartTime || totalInstances === 0) {
+            if (!sessionStartTime || hourlyCost === 0) {
                 document.getElementById('cost-estimate').textContent = '$0.00';
                 return;
             }
 
             const now = new Date();
             const elapsedHours = (now - sessionStartTime) / (1000 * 60 * 60);
-            const estimatedCost = elapsedHours * totalInstances * HOURLY_COST_PER_INSTANCE;
+            const estimatedCost = elapsedHours * hourlyCost;
 
             // Format cost with 2-4 decimal places depending on value
             let formattedCost;
@@ -470,6 +471,16 @@
             }
 
             document.getElementById('cost-estimate').textContent = `$${formattedCost}`;
+        }
+
+        function formatCurrency(value) {
+            if (value < 0.01) {
+                return value.toFixed(4);
+            } else if (value < 1) {
+                return value.toFixed(3);
+            } else {
+                return value.toFixed(2);
+            }
         }
 
         function startCostTracking() {
@@ -567,20 +578,32 @@
             document.getElementById('participant-count').textContent = data.participant_count || 0;
             document.getElementById('last-update').textContent = formatTime(data.timestamp);
 
-            // Calculate total instances (masters + workers)
-            const newTotalInstances = data.participants.reduce((total, p) => {
-                return total + 1 + p.worker_count; // 1 master + N workers
-            }, 0);
+            // Update cost information from backend
+            if (data.cost) {
+                const newHourlyCost = data.cost.total_hourly || 0;
 
-            // Initialize session start time on first data load or if instance count changes
-            if (!sessionStartTime || newTotalInstances !== totalInstances) {
-                sessionStartTime = new Date();
-                totalInstances = newTotalInstances;
-                startCostTracking();
+                // Display hourly cost with breakdown tooltip
+                const costBreakdown = data.cost.breakdown ?
+                    `EC2: $${formatCurrency(data.cost.ec2)} (${data.cost.breakdown.clusters}x ${data.cost.breakdown.master_instance_type} + ${data.cost.breakdown.worker_count_per_cluster}x ${data.cost.breakdown.worker_instance_type})\n` +
+                    `EBS: $${formatCurrency(data.cost.ebs)}\n` +
+                    `NAT Gateway: $${formatCurrency(data.cost.nat_gateway)} (${data.cost.breakdown.nat_gateways}x)`
+                    : '';
+
+                document.getElementById('cost-hourly').textContent = `$${formatCurrency(newHourlyCost)}/h`;
+                document.getElementById('cost-hourly').title = costBreakdown || 'Coût AWS par heure';
+
+                // Initialize or update session start time
+                if (!sessionStartTime || newHourlyCost !== hourlyCost) {
+                    if (!sessionStartTime) {
+                        sessionStartTime = new Date();
+                    }
+                    hourlyCost = newHourlyCost;
+                    startCostTracking();
+                }
+
+                // Update total cost estimate immediately
+                updateCostEstimate();
             }
-
-            // Update cost estimate immediately
-            updateCostEstimate();
         }
 
         async function refreshData() {
