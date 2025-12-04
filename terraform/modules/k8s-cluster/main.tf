@@ -25,13 +25,22 @@ resource "aws_security_group" "k8s_cluster" {
   description = "Security group for ${var.participant_name} Kubernetes cluster"
   vpc_id      = var.vpc_id
 
-  # SSH access
+  # SSH access from external
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = var.allowed_ssh_cidrs
-    description = "SSH access"
+    description = "SSH access from external"
+  }
+
+  # SSH access within cluster
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    self        = true
+    description = "SSH access within cluster"
   }
 
   # Kubernetes API server
