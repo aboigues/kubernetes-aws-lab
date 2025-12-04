@@ -200,7 +200,7 @@ resource "aws_instance" "worker" {
   user_data = templatefile("${path.module}/user-data-worker.sh", {
     kubernetes_version        = var.kubernetes_version
     master_private_ip         = aws_instance.master.private_ip
-    cluster_internal_ssh_key  = tls_private_key.cluster_internal.private_key_pem
+    cluster_internal_ssh_key  = tls_private_key.cluster_internal.private_key_openssh
     node_name                 = "worker-${count.index + 1}"
     worker_index              = count.index + 1
     participant_name          = var.participant_name
