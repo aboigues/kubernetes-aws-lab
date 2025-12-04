@@ -107,9 +107,11 @@ cp /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
 chown -R ubuntu:ubuntu /home/ubuntu/.kube
 
 # Configure internal SSH key for cluster communication
+mkdir -p /home/ubuntu/.ssh
 echo "$CLUSTER_INTERNAL_SSH_PUB" >> /home/ubuntu/.ssh/authorized_keys
+chmod 700 /home/ubuntu/.ssh
 chmod 600 /home/ubuntu/.ssh/authorized_keys
-chown ubuntu:ubuntu /home/ubuntu/.ssh/authorized_keys
+chown -R ubuntu:ubuntu /home/ubuntu/.ssh
 
 # Configure kubectl for root
 export KUBECONFIG=/etc/kubernetes/admin.conf
