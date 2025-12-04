@@ -6,7 +6,6 @@ set -euxo pipefail
 # Variables
 K8S_VERSION="${kubernetes_version}"
 MASTER_IP="${master_private_ip}"
-CLUSTER_INTERNAL_SSH_KEY="${cluster_internal_ssh_key}"
 NODE_NAME="${node_name}"
 WORKER_INDEX="${worker_index}"
 PARTICIPANT_NAME="${participant_name}"
@@ -93,16 +92,16 @@ systemctl enable kubelet
 
 # Configure internal SSH key for cluster communication
 mkdir -p /root/.ssh
-cat <<EOF > /root/.ssh/cluster_internal_key
-$CLUSTER_INTERNAL_SSH_KEY
-EOF
+cat <<'SSHKEY' > /root/.ssh/cluster_internal_key
+${cluster_internal_ssh_key}
+SSHKEY
 chmod 600 /root/.ssh/cluster_internal_key
 
 # Also configure for ubuntu user
 mkdir -p /home/ubuntu/.ssh
-cat <<EOF > /home/ubuntu/.ssh/cluster_internal_key
-$CLUSTER_INTERNAL_SSH_KEY
-EOF
+cat <<'SSHKEY' > /home/ubuntu/.ssh/cluster_internal_key
+${cluster_internal_ssh_key}
+SSHKEY
 chmod 600 /home/ubuntu/.ssh/cluster_internal_key
 chown ubuntu:ubuntu /home/ubuntu/.ssh/cluster_internal_key
 
