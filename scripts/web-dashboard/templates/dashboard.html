@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes AWS Lab - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .header .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .info-bar {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-item .label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .info-item .value {
+            color: #667eea;
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.active {
+            background-color: #10b981;
+        }
+
+        .status-indicator.error {
+            background-color: #ef4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .refresh-btn:active {
+            transform: translateY(0);
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .auto-refresh label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tbody tr {
+            transition: background-color 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .participant-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .ip-address {
+            font-family: 'Courier New', monospace;
+            color: #667eea;
+            background: #f3f4f6;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 2px 0;
+        }
+
+        .worker-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .worker-item {
+            font-size: 0.9em;
+        }
+
+        .ssh-command {
+            font-family: 'Courier New', monospace;
+            background: #1f2937;
+            color: #10b981;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            display: inline-block;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ssh-command:hover {
+            background: #374151;
+            transform: scale(1.02);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-warning {
+            background: #fed7aa;
+            color: #92400e;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #374151;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .copy-tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .copy-tooltip .tooltip-text {
+            visibility: hidden;
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 5px 10px;
+            border-radius: 4px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .copy-tooltip .tooltip-text.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .info-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .controls {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .refresh-btn {
+                width: 100%;
+            }
+
+            table {
+                font-size: 0.9em;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Kubernetes AWS Lab Dashboard</h1>
+            <p class="subtitle">Informations d'accès des participants en temps réel</p>
+        </div>
+
+        <div class="info-bar">
+            <div class="info-item">
+                <span class="label">Session:</span>
+                <span class="value" id="session-name">{{ current_session or 'N/A' }}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Participants:</span>
+                <span class="value" id="participant-count">0</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Statut:</span>
+                <span class="status-indicator active" id="status-indicator"></span>
+            </div>
+            <div class="info-item">
+                <span class="label">Dernière mise à jour:</span>
+                <span class="value" id="last-update">-</span>
+            </div>
+            <div class="controls">
+                <button class="refresh-btn" onclick="refreshData()">🔄 Actualiser</button>
+                <div class="auto-refresh">
+                    <label for="auto-refresh-toggle">Auto</label>
+                    <label class="switch">
+                        <input type="checkbox" id="auto-refresh-toggle" checked onchange="toggleAutoRefresh()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div id="error-container"></div>
+        <div class="loading" id="loading">Chargement des données...</div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Participant</th>
+                        <th>Master Node</th>
+                        <th>IP Privée Master</th>
+                        <th>Workers</th>
+                        <th>IPs Publiques Workers</th>
+                        <th>Commande SSH</th>
+                    </tr>
+                </thead>
+                <tbody id="data-table">
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-state-icon">📊</div>
+                            <h3>Chargement des données...</h3>
+                            <p>Veuillez patientez pendant que nous récupérons les informations</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval = null;
+        let isAutoRefreshEnabled = true;
+        const REFRESH_INTERVAL = 10000; // 10 seconds
+
+        function formatTime(isoString) {
+            if (!isoString) return '-';
+            const date = new Date(isoString);
+            return date.toLocaleTimeString('fr-FR');
+        }
+
+        function copyToClipboard(text, element) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Show tooltip
+                const tooltip = element.querySelector('.tooltip-text');
+                if (tooltip) {
+                    tooltip.classList.add('show');
+                    setTimeout(() => {
+                        tooltip.classList.remove('show');
+                    }, 2000);
+                }
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+
+        function renderTable(data) {
+            const tableBody = document.getElementById('data-table');
+            const errorContainer = document.getElementById('error-container');
+            const statusIndicator = document.getElementById('status-indicator');
+
+            // Clear previous error
+            errorContainer.innerHTML = '';
+
+            if (data.error) {
+                errorContainer.innerHTML = `
+                    <div class="error-message">
+                        <strong>⚠️ Erreur:</strong> ${data.error}
+                    </div>
+                `;
+                statusIndicator.className = 'status-indicator error';
+                return;
+            }
+
+            statusIndicator.className = 'status-indicator active';
+
+            if (!data.participants || data.participants.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <h3>Aucun participant trouvé</h3>
+                            <p>Aucune donnée disponible pour cette session</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = data.participants.map(participant => {
+                const workerBadge = participant.worker_count > 0
+                    ? `<span class="badge badge-success">${participant.worker_count} worker(s)</span>`
+                    : `<span class="badge badge-warning">Aucun worker</span>`;
+
+                const workerIPs = participant.worker_public_ips.length > 0
+                    ? `<div class="worker-list">
+                        ${participant.worker_public_ips.map((ip, index) => `
+                            <div class="worker-item">
+                                <strong>Worker-${index + 1}:</strong> <span class="ip-address">${ip}</span>
+                            </div>
+                        `).join('')}
+                       </div>`
+                    : '<span style="color: #9ca3af;">Aucun</span>';
+
+                return `
+                    <tr>
+                        <td class="participant-name">${participant.name}</td>
+                        <td><span class="ip-address">${participant.master_ip}</span></td>
+                        <td><span class="ip-address">${participant.master_private_ip}</span></td>
+                        <td>${workerBadge}</td>
+                        <td>${workerIPs}</td>
+                        <td>
+                            <div class="copy-tooltip">
+                                <span class="ssh-command" onclick="copyToClipboard('${participant.ssh_command}', this)">
+                                    ${participant.ssh_command}
+                                </span>
+                                <span class="tooltip-text">Copié !</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Update info bar
+            document.getElementById('session-name').textContent = data.session || 'N/A';
+            document.getElementById('participant-count').textContent = data.participant_count || 0;
+            document.getElementById('last-update').textContent = formatTime(data.timestamp);
+        }
+
+        async function refreshData() {
+            const loading = document.getElementById('loading');
+            loading.classList.add('active');
+
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                renderTable(data);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('error-container').innerHTML = `
+                    <div class="error-message">
+                        <strong>⚠️ Erreur de connexion:</strong> Impossible de récupérer les données
+                    </div>
+                `;
+                document.getElementById('status-indicator').className = 'status-indicator error';
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        function toggleAutoRefresh() {
+            isAutoRefreshEnabled = document.getElementById('auto-refresh-toggle').checked;
+
+            if (isAutoRefreshEnabled) {
+                startAutoRefresh();
+            } else {
+                stopAutoRefresh();
+            }
+        }
+
+        function startAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            autoRefreshInterval = setInterval(refreshData, REFRESH_INTERVAL);
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshData();
+            if (isAutoRefreshEnabled) {
+                startAutoRefresh();
+            }
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            stopAutoRefresh();
+        });
+    </script>
+</body>
+</html>
