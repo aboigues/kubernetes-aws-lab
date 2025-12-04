@@ -27,3 +27,10 @@ Thumbs.db
 
 # Backup files
 *.bak
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python

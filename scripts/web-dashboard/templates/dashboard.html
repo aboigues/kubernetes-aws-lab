@@ -34,12 +34,12 @@
         .header h1 {
             color: #333;
             margin-bottom: 10px;
-            font-size: 2em;
+            font-size: 1.6em;
         }
 
         .header .subtitle {
             color: #666;
-            font-size: 1.1em;
+            font-size: 0.95em;
         }
 
         .info-bar {
@@ -69,7 +69,7 @@
         .info-item .value {
             color: #667eea;
             font-weight: 700;
-            font-size: 1.1em;
+            font-size: 1em;
         }
 
         .status-indicator {
@@ -199,17 +199,18 @@
         }
 
         th {
-            padding: 15px;
+            padding: 12px 10px;
             text-align: left;
             font-weight: 600;
-            font-size: 0.95em;
+            font-size: 0.8em;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         td {
-            padding: 15px;
+            padding: 10px;
             border-bottom: 1px solid #e5e7eb;
+            font-size: 0.9em;
         }
 
         tbody tr {
@@ -233,10 +234,11 @@
             font-family: 'Courier New', monospace;
             color: #667eea;
             background: #f3f4f6;
-            padding: 4px 8px;
+            padding: 3px 6px;
             border-radius: 4px;
             display: inline-block;
             margin: 2px 0;
+            font-size: 0.85em;
         }
 
         .worker-list {
@@ -253,9 +255,9 @@
             font-family: 'Courier New', monospace;
             background: #1f2937;
             color: #10b981;
-            padding: 8px 12px;
+            padding: 6px 10px;
             border-radius: 4px;
-            font-size: 0.85em;
+            font-size: 0.75em;
             display: inline-block;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -308,18 +310,6 @@
             padding: 15px;
             border-radius: 4px;
             margin-bottom: 20px;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-            color: #667eea;
-            font-weight: 600;
-        }
-
-        .loading.active {
-            display: block;
         }
 
         .copy-tooltip {
@@ -399,6 +389,14 @@
                 <span class="label">Dernière mise à jour:</span>
                 <span class="value" id="last-update">-</span>
             </div>
+            <div class="info-item">
+                <span class="label">Coût horaire:</span>
+                <span class="value" id="cost-hourly" style="color: #f59e0b;" title="Coût AWS par heure">$0.00/h</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Coût estimé session:</span>
+                <span class="value" id="cost-estimate" style="color: #f59e0b;" title="Coût total depuis le début">$0.00</span>
+            </div>
             <div class="controls">
                 <button class="refresh-btn" onclick="refreshData()">🔄 Actualiser</button>
                 <div class="auto-refresh">
@@ -412,7 +410,6 @@
         </div>
 
         <div id="error-container"></div>
-        <div class="loading" id="loading">Chargement des données...</div>
 
         <div class="table-container">
             <table>
@@ -443,11 +440,55 @@
         let autoRefreshInterval = null;
         let isAutoRefreshEnabled = true;
         const REFRESH_INTERVAL = 10000; // 10 seconds
+        let sessionStartTime = null;
+        let hourlyCost = 0;
+        let costUpdateInterval = null;
 
         function formatTime(isoString) {
             if (!isoString) return '-';
             const date = new Date(isoString);
             return date.toLocaleTimeString('fr-FR');
+        }
+
+        function updateCostEstimate() {
+            if (!sessionStartTime || hourlyCost === 0) {
+                document.getElementById('cost-estimate').textContent = '$0.00';
+                return;
+            }
+
+            const now = new Date();
+            const elapsedHours = (now - sessionStartTime) / (1000 * 60 * 60);
+            const estimatedCost = elapsedHours * hourlyCost;
+
+            // Format cost with 2-4 decimal places depending on value
+            let formattedCost;
+            if (estimatedCost < 0.01) {
+                formattedCost = estimatedCost.toFixed(4);
+            } else if (estimatedCost < 1) {
+                formattedCost = estimatedCost.toFixed(3);
+            } else {
+                formattedCost = estimatedCost.toFixed(2);
+            }
+
+            document.getElementById('cost-estimate').textContent = `$${formattedCost}`;
+        }
+
+        function formatCurrency(value) {
+            if (value < 0.01) {
+                return value.toFixed(4);
+            } else if (value < 1) {
+                return value.toFixed(3);
+            } else {
+                return value.toFixed(2);
+            }
+        }
+
+        function startCostTracking() {
+            if (costUpdateInterval) {
+                clearInterval(costUpdateInterval);
+            }
+            // Update cost every 30 seconds
+            costUpdateInterval = setInterval(updateCostEstimate, 30000);
         }
 
         function copyToClipboard(text, element) {
@@ -536,12 +577,36 @@
             document.getElementById('session-name').textContent = data.session || 'N/A';
             document.getElementById('participant-count').textContent = data.participant_count || 0;
             document.getElementById('last-update').textContent = formatTime(data.timestamp);
+
+            // Update cost information from backend
+            if (data.cost) {
+                const newHourlyCost = data.cost.total_hourly || 0;
+
+                // Display hourly cost with breakdown tooltip
+                const costBreakdown = data.cost.breakdown ?
+                    `EC2: $${formatCurrency(data.cost.ec2)} (${data.cost.breakdown.clusters}x ${data.cost.breakdown.master_instance_type} + ${data.cost.breakdown.worker_count_per_cluster}x ${data.cost.breakdown.worker_instance_type})\n` +
+                    `EBS: $${formatCurrency(data.cost.ebs)}\n` +
+                    `NAT Gateway: $${formatCurrency(data.cost.nat_gateway)} (${data.cost.breakdown.nat_gateways}x)`
+                    : '';
+
+                document.getElementById('cost-hourly').textContent = `$${formatCurrency(newHourlyCost)}/h`;
+                document.getElementById('cost-hourly').title = costBreakdown || 'Coût AWS par heure';
+
+                // Initialize or update session start time
+                if (!sessionStartTime || newHourlyCost !== hourlyCost) {
+                    if (!sessionStartTime) {
+                        sessionStartTime = new Date();
+                    }
+                    hourlyCost = newHourlyCost;
+                    startCostTracking();
+                }
+
+                // Update total cost estimate immediately
+                updateCostEstimate();
+            }
         }
 
         async function refreshData() {
-            const loading = document.getElementById('loading');
-            loading.classList.add('active');
-
             try {
                 const response = await fetch('/api/data');
                 const data = await response.json();
@@ -554,8 +619,6 @@
                     </div>
                 `;
                 document.getElementById('status-indicator').className = 'status-indicator error';
-            } finally {
-                loading.classList.remove('active');
             }
         }
 
@@ -594,6 +657,9 @@
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
             stopAutoRefresh();
+            if (costUpdateInterval) {
+                clearInterval(costUpdateInterval);
+            }
         });
     </script>
 </body>
