@@ -11,6 +11,9 @@ TERRAFORM_DIR="$PROJECT_ROOT/terraform"
 SESSIONS_DIR="$PROJECT_ROOT/sessions"
 PARTICIPANTS_DIR="$PROJECT_ROOT/participants"
 
+# Global option for auto-approve
+AUTO_APPROVE=0
+
 # Colors for output
 RED=$'\033[0;31m'
 GREEN=$'\033[0;32m'
@@ -48,12 +51,15 @@ ${BLUE}Commands:${NC}
   workspaces                    List all Terraform workspaces
   init <session>                Initialize a new session workspace
   plan <session>                Plan infrastructure for a session
-  apply <session>               Deploy infrastructure for a session
-  destroy <session>             Destroy infrastructure for a session
+  apply <session> [-y]          Deploy infrastructure for a session
+  destroy <session> [-y]        Destroy infrastructure for a session
   output <session>              Show outputs for a session
   status <session>              Show status of a session
   switch <session>              Switch to a session workspace
   create-config <session>       Create a new session configuration file
+
+${BLUE}Options:${NC}
+  -y                            Auto-approve (skip confirmation prompts for apply/destroy)
 
 ${BLUE}Examples:${NC}
   # List all sessions
@@ -63,12 +69,18 @@ ${BLUE}Examples:${NC}
   $0 init session-1
   $0 apply session-1
 
+  # Deploy with auto-approve (no confirmation prompt)
+  $0 apply session-1 -y
+
+  # Destroy with auto-approve
+  $0 destroy session-1 -y
+
   # Check status of session-2
   $0 status session-2
 
   # Deploy multiple sessions in parallel (in separate terminals)
-  Terminal 1: $0 apply session-1
-  Terminal 2: $0 apply session-2
+  Terminal 1: $0 apply session-1 -y
+  Terminal 2: $0 apply session-2 -y
 
 ${BLUE}Session Configuration:${NC}
   - Session configs are stored in: sessions/
@@ -242,7 +254,11 @@ apply_session() {
     fi
 
     log_info "Deploying infrastructure for session: $session"
-    terraform apply -var-file="$config_file"
+    if [ "$AUTO_APPROVE" -eq 1 ]; then
+        terraform apply -var-file="$config_file" -auto-approve
+    else
+        terraform apply -var-file="$config_file"
+    fi
 }
 
 # Destroy session infrastructure
@@ -274,7 +290,11 @@ destroy_session() {
     fi
 
     log_warning "Destroying infrastructure for session: $session"
-    terraform destroy -var-file="$config_file"
+    if [ "$AUTO_APPROVE" -eq 1 ]; then
+        terraform destroy -var-file="$config_file" -auto-approve
+    else
+        terraform destroy -var-file="$config_file"
+    fi
 }
 
 # Show session output
@@ -474,10 +494,40 @@ main() {
             plan_session "$@"
             ;;
         apply)
-            apply_session "$@"
+            local session=$1
+            shift || true
+            # Parse -y option
+            while [[ $# -gt 0 ]]; do
+                case $1 in
+                    -y)
+                        AUTO_APPROVE=1
+                        shift
+                        ;;
+                    *)
+                        log_error "Unknown option for apply: $1"
+                        exit 1
+                        ;;
+                esac
+            done
+            apply_session "$session"
             ;;
         destroy)
-            destroy_session "$@"
+            local session=$1
+            shift || true
+            # Parse -y option
+            while [[ $# -gt 0 ]]; do
+                case $1 in
+                    -y)
+                        AUTO_APPROVE=1
+                        shift
+                        ;;
+                    *)
+                        log_error "Unknown option for destroy: $1"
+                        exit 1
+                        ;;
+                esac
+            done
+            destroy_session "$session"
             ;;
         output)
             output_session "$@"
