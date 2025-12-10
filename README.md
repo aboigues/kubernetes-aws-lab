@@ -180,12 +180,12 @@ project_name = "k8s-lab"
 
 ### Coûts estimés
 
-Pour un déploiement avec 5 participants en eu-west-1 :
+Pour un déploiement avec 11 participants en eu-west-1 :
 
-- 5 master nodes (t3.medium) : ~$0.0416/heure × 5 = ~$0.21/heure
-- 10 worker nodes (t3.small) : ~$0.0208/heure × 10 = ~$0.21/heure
+- 11 master nodes (t3.medium) : ~$0.0416/heure × 11 = ~$0.46/heure
+- 22 worker nodes (t3.small) : ~$0.0208/heure × 22 = ~$0.46/heure
 - NAT Gateway : ~$0.045/heure × 2 = ~$0.09/heure
-- Total : **~$0.51/heure** (~$12/jour)
+- Total : **~$1.01/heure** (~$24/jour)
 
 ⚠️ **Important** : Pensez à détruire l'infrastructure quand vous ne l'utilisez plus !
 
