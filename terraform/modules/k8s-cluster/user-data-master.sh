@@ -122,6 +122,10 @@ kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/
 # Wait for Calico to be ready
 kubectl wait --for=condition=ready pod -l k8s-app=calico-node -n kube-system --timeout=300s || true
 
+# Remove control-plane taint to allow pod scheduling on master (useful for lab environments)
+# This allows pods to be scheduled on the master node when there are no workers
+kubectl taint nodes $NODE_NAME node-role.kubernetes.io/control-plane:NoSchedule- || true
+
 # Generate and save join command for workers
 kubeadm token create --print-join-command > /home/ubuntu/kubeadm-join-command.sh
 chmod +x /home/ubuntu/kubeadm-join-command.sh
