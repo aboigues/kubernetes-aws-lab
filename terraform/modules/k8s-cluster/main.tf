@@ -168,6 +168,7 @@ resource "aws_instance" "master" {
     cluster_internal_ssh_pub = tls_private_key.cluster_internal.public_key_openssh
     node_name                = "master"
     participant_name         = var.participant_name
+    worker_count             = var.worker_count
   })
 
   tags = merge(

@@ -10,6 +10,7 @@ POD_NETWORK_CIDR="${pod_network_cidr}"
 CLUSTER_INTERNAL_SSH_PUB="${cluster_internal_ssh_pub}"
 NODE_NAME="${node_name}"
 PARTICIPANT_NAME="${participant_name}"
+WORKER_COUNT="${worker_count}"
 
 # Log everything
 exec > >(tee /var/log/user-data.log)
@@ -20,6 +21,12 @@ echo "Kubernetes Version: $K8S_VERSION"
 echo "Cluster Name: $CLUSTER_NAME"
 echo "Pod Network CIDR: $POD_NETWORK_CIDR"
 echo "Node Name: $NODE_NAME"
+echo "Worker Count: $WORKER_COUNT"
+if [ "$WORKER_COUNT" -eq 0 ]; then
+    echo "Mode: Master-only (control-plane taint will be removed)"
+else
+    echo "Mode: Master + $WORKER_COUNT worker(s) (control-plane taint will be preserved)"
+fi
 
 # Set hostname
 hostnamectl set-hostname "$NODE_NAME"
@@ -122,9 +129,16 @@ kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/
 # Wait for Calico to be ready
 kubectl wait --for=condition=ready pod -l k8s-app=calico-node -n kube-system --timeout=300s || true
 
-# Remove control-plane taint to allow pod scheduling on master (useful for lab environments)
-# This allows pods to be scheduled on the master node when there are no workers
-kubectl taint nodes $NODE_NAME node-role.kubernetes.io/control-plane:NoSchedule- || true
+# Handle control-plane taint based on worker count
+if [ "$WORKER_COUNT" -eq 0 ]; then
+    echo "=== No workers configured - Removing control-plane taint to allow pod scheduling on master ==="
+    # Remove control-plane taint to allow pod scheduling on master (useful for lab environments without workers)
+    kubectl taint nodes $NODE_NAME node-role.kubernetes.io/control-plane:NoSchedule- || true
+    echo "✓ Control-plane taint removed - Pods can now be scheduled on master node"
+else
+    echo "=== Workers configured ($WORKER_COUNT) - Keeping control-plane taint to reserve master for control plane only ==="
+    echo "✓ Control-plane taint preserved - Pods will be scheduled on worker nodes"
+fi
 
 # Generate and save join command for workers
 kubeadm token create --print-join-command > /home/ubuntu/kubeadm-join-command.sh
@@ -132,15 +146,24 @@ chmod +x /home/ubuntu/kubeadm-join-command.sh
 chown ubuntu:ubuntu /home/ubuntu/kubeadm-join-command.sh
 
 # Create a simple script to display cluster info
-cat <<'SCRIPT' > /home/ubuntu/cluster-info.sh
+cat <<SCRIPT > /home/ubuntu/cluster-info.sh
 #!/bin/bash
 echo "================================"
 echo "Kubernetes Cluster Information"
 echo "================================"
 echo ""
 echo "Cluster Name: $CLUSTER_NAME"
-echo "Master Node: $(hostname)"
-echo "Private IP: $(hostname -I | awk '{print $1}')"
+echo "Master Node: \$(hostname)"
+echo "Private IP: \$(hostname -I | awk '{print \$1}')"
+echo "Worker Count: $WORKER_COUNT"
+echo ""
+if [ "$WORKER_COUNT" -eq 0 ]; then
+    echo "Mode: Master-only (pods can run on master)"
+    echo "Control-plane taint has been removed to allow pod scheduling."
+else
+    echo "Mode: Master + $WORKER_COUNT worker(s)"
+    echo "Control-plane taint is active - pods will run on worker nodes."
+fi
 echo ""
 echo "Get cluster status:"
 echo "  kubectl get nodes"
