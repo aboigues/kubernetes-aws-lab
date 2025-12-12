@@ -34,3 +34,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+# Generated reminder files
+.RULES-REMINDER.txt
